@@ -30,32 +30,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from skimage.io import imread, imsave
-from skimage.filters import gaussian, threshold_otsu
-from skimage.measure import label, regionprops, regionprops_table
+from skimage.filters import gaussian, threshold_otsu, sobel
+from skimage.measure import label, regionprops, regionprops_table, perimeter
 from skimage.morphology import remove_small_objects, skeletonize
 from skimage.exposure import rescale_intensity
 from stardist.models import StarDist2D
 from scipy.ndimage import distance_transform_edt
-
-def convert_ipynb_to_py(ipynb_file, py_file):
-    """
-    Convert a Jupyter Notebook (.ipynb) file to a Python (.py) script.
-
-    Parameters:
-    ipynb_file (str): The path to the input .ipynb file.
-    py_file (str): The path to the output .py file.
-    """
-    import nbformat
-    from nbconvert import PythonExporter
-
-    with open(ipynb_file, 'r', encoding='utf-8') as f:
-        notebook_content = nbformat.read(f, as_version=4)
-
-    python_exporter = PythonExporter()
-    python_code, _ = python_exporter.from_notebook_node(notebook_content)
-
-    with open(py_file, 'w', encoding='utf-8') as f:
-        f.write(python_code)
 
 def image_info(image_path):
     """
@@ -73,6 +53,36 @@ def image_info(image_path):
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
         return None, None
+
+def normalize(image):
+    """Normalizes the image intensity to the range [0, 1]."""
+    return rescale_intensity(image, in_range='image', out_range=(0, 1))
+
+def plot_normalized_channels(channel_1, channel_2):
+    """
+    Plots the normalized channels.
+
+    Args:
+        channel_1: The first image channel (e.g., nuclei).
+        channel_2: The second image channel (e.g., membrane).
+    """
+    # Normalize channels
+    normalized_channel_1 = normalize(channel_1)
+    normalized_channel_2 = normalize(channel_2)
+
+    # Plot normalized channels
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.imshow(normalized_channel_1, cmap='gray')
+    plt.title('Normalized Channel 1 (Nuclei)')
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(normalized_channel_2, cmap='gray')
+    plt.title('Normalized Channel 2 (Membrane)')
+
+    plt.tight_layout()
+    plt.show()
 
 def measure_brightness_variability(intensity_image, mask):
     """
@@ -258,7 +268,7 @@ def summarize_features(df):
             summary_stats[f"{col}_unique_count"] = df[col].nunique()
     return pd.DataFrame([summary_stats])
 
-def process_image(image_path):
+def process_imag_old(image_path):
     """
     Processes an image and returns information about it.
 
@@ -306,6 +316,79 @@ def process_image(image_path):
         print(f"Error processing {image_path}: {e}")
         return None
 
+def process_image(image_path):
+    """
+    Processes an image and returns information about it.
+
+    Args:
+        image_path: The path to the image file.
+
+    Returns: summary_df_ch1, summary_df_ch2 as statistical summary
+    """
+    try:
+        image_size, num_channels = image_info(image_path)
+        if image_size is None or num_channels != 2:
+            return None
+
+        img = imread(image_path)
+        output_folder = os.path.dirname(image_path)
+        image_name = os.path.splitext(os.path.basename(image_path))[0]
+        #####################################################
+        ## membrane
+        channel_2 = img[1, :, :]
+        label_image_ch2, _, _ = image_th_ch2(channel_2)
+        save_label_mask(image_path, label_image_ch2, output_folder)
+        df_features_ch2 = measure_image(label_image_ch2, channel_2, properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity', 'mean_intensity', 'major_axis_length', 'minor_axis_length'])
+        ## save full features csv
+        df_features_ch2.to_csv(os.path.join(output_folder, f"{image_name}_features_ch2.csv"), index=False)
+        summary_df_ch2 = summarize_features(df_features_ch2)
+
+        #####################################################
+        ## membrane gradient
+        #TODO: gradient_analysis(image_path,vis=False)
+
+        #####################################################
+        ## bright spots
+        #TODO: analyze_bright_spots(image_path,vis=False)
+
+        #####################################################
+        ## detect boundary
+        #TODO: detect_boundary(image_path)
+
+        #####################################################
+        ## membrane continuity
+        cleaned_channel_2, cleaned_membrane = prep_for_membrane_analysis(image_path,vis=False)
+        membrane_continuity_metrics = analyze_membrane_continuity(cleaned_channel_2, cleaned_membrane)
+        summary_df_ch2 = pd.concat([summary_df_ch2, membrane_continuity_metrics], axis=1)
+
+        #####################################################
+        ## nuclei
+        channel_1 = img[0, :, :]
+        label_image_ch1, _, _ = image_th_ch1(channel_1)
+        save_label_mask(image_path, label_image_ch1, output_folder)
+        df_features_ch1 = measure_image(label_image_ch1, channel_1, properties=['area', 'perimeter', 'solidity', 'max_intensity', 'mean_intensity', 'min_intensity', 'major_axis_length', 'minor_axis_length'])
+        df_features_ch1.to_csv(os.path.join(output_folder, f"{image_name}_features_ch1.csv"), index=False)
+        summary_df_ch1 = summarize_features(df_features_ch1)
+
+        specific_df = pd.DataFrame(index=[0])
+        specific_df['nuclei_under_membrane'] = count_nuclei_under_membrane(label_image_ch1, create_mask_from_labels(label_image_ch2))
+        specific_df['percentage_nuclei_pixels'] = percentage_nuclei_pixels(label_image_ch1, create_mask_from_labels(label_image_ch2))
+        specific_df['membrane_pixel_count'] = measure_membrane_pixel_count(label_image_ch2)
+        thickness_stats = measure_membrane_thickness(label_image_ch2, channel_2)
+        if thickness_stats:
+            # Convert thickness_stats to DataFrame with index
+            thickness_df = pd.DataFrame(thickness_stats, index=[0])
+            specific_df = pd.concat([specific_df, thickness_df], axis=1) # Concatenate with specific_df
+            # specific_df.update(thickness_stats) # Remove this line
+        brightness_variability = measure_brightness_variability(channel_2, create_mask_from_labels(label_image_ch2))
+        if brightness_variability:
+            specific_df['membrane_brightness_std_dev'] = brightness_variability['std_dev']
+
+        return summary_df_ch1, summary_df_ch2, specific_df
+    except Exception as e:
+        print(f"Error processing {image_path}: {e}")
+        return None
+
 def detect_boundary(image_path):
     """
     Detects the boundary of the membrane in the image.
@@ -332,7 +415,186 @@ def detect_boundary(image_path):
         ax.axis("off")
     plt.show()
 
-def analyze_bright_spots(image_path):
+def detect_boundary_wider(image_path):
+    """
+        Detects the boundary of the membrane in the image.
+
+        Args:
+            image_path: Path to the image file.
+    """
+    img = imread(image_path)
+
+    #####################################################
+    ## membrane
+    channel_2 = img[1, :, :]
+
+    #####################################################
+    ## nuclei
+    channel_1 = img[0, :, :]
+
+    # def detect_boundary(image_path):
+    # Load image
+    # image = cv2.imread(image_path)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert to RGB
+    gray = channel_2
+
+    # Convert to grayscale
+    # gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+
+    # Normalize to 8-bit for processing
+    image_8bit = cv2.convertScaleAbs(gray, alpha=(255.0/65535.0))
+
+    # Apply Median Filter to reduce salt-and-pepper noise
+    median_filtered = cv2.medianBlur(image_8bit, 15)
+
+    # median_filtered = cv2.medianBlur(median_filtered, 5)
+
+    # median_filtered = cv2.medianBlur(median_filtered, 5)
+
+    # median_filtered = cv2.medianBlur(median_filtered, 5)
+
+    # median_filtered = cv2.medianBlur(median_filtered, 5)
+
+    # blurred = cv2.medianBlur(median_filtered, 5)
+
+    # Apply Gaussian Blur to further smooth the image
+    blurred = cv2.GaussianBlur(median_filtered, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+    blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+
+    # Apply Otsu's Thresholding (only works on 8-bit images)
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # _, thresh = cv2.threshold(blurred, 127, 255, cv2.THRESH_TRUNC)
+
+    # Find contours
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Convert grayscale 16-bit image to RGB for visualization
+    image_rgb = cv2.cvtColor(image_8bit, cv2.COLOR_GRAY2RGB)
+    result = image_rgb.copy()
+    cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+    # Show the results
+    fig, axes = plt.subplots(1, 3, figsize=(12, 6))
+    axes[0].imshow(image_8bit, cmap='gray')
+    axes[0].set_title("Original Image (8-bit Scaled)")
+    axes[0].axis("off")
+
+    axes[1].imshow(result)
+    axes[1].set_title("Detected Boundary")
+    axes[1].axis("off")
+
+    axes[2].imshow(blurred)
+    axes[2].set_title("blurred")
+    axes[2].axis("off")
+
+    plt.show()
+
+def gradient_analysis(image_path,vis=False):
+    """
+    Analyzes the gradient of the membrane channel and returns bright spots.
+
+    Args:
+        image_path (str): Path to the image file.
+
+    Returns:
+        list: Brightness values for each expansion step.
+    """
+    img = imread(image_path)
+
+    # Membrane channel
+    channel_2 = img[1, :, :]
+
+    # Normalize to 8-bit for processing
+    image_8bit = cv2.convertScaleAbs(channel_2, alpha=(255.0/65535.0))
+
+    # Apply Median Filter to reduce salt-and-pepper noise
+    median_filtered = cv2.medianBlur(image_8bit, 15)
+
+    # Apply Gaussian Blur to further smooth the image
+    blurred = cv2.GaussianBlur(median_filtered, (13, 13), 0)
+    for _ in range(6):
+        blurred = cv2.GaussianBlur(blurred, (13, 13), 0)
+
+    # Apply Otsu's Thresholding
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # Find contours
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Convert grayscale 16-bit image to RGB for visualization
+    image_rgb = cv2.cvtColor(image_8bit, cv2.COLOR_GRAY2RGB)
+    result = image_rgb.copy()
+    cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+
+    # Expand the mask outward from the detected boundary
+    mask = np.zeros_like(thresh)
+    cv2.drawContours(mask, contours, -1, 255, thickness=cv2.FILLED)
+
+    step_size = 60
+    max_steps = 10  # Number of steps to expand in each direction
+    brightness_values = []
+    start = True
+
+    for i in range(1, max_steps + 1):
+        # Expand outward by dilation
+        kernel = np.ones((3, 3), np.uint8)
+        expanded_mask = cv2.dilate(mask, kernel, iterations=i * step_size // 3)
+
+        # Get the new region (difference between expanded mask and original mask)
+        if start:
+            expansion_region = cv2.bitwise_xor(expanded_mask, mask)
+            old_mask = expanded_mask
+        else:
+            expansion_region = cv2.bitwise_xor(expanded_mask, old_mask)
+            old_mask = expanded_mask
+
+        # Find separate connected regions within the expansion region
+        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(expansion_region, connectivity=8)
+
+        region_brightness = []
+        for label in range(1, num_labels):  # Skip background (label 0)
+            brightness_values_list = channel_2[labels == label].flatten()
+            percentiles = np.percentile(brightness_values_list, [25, 50, 75, 95])
+            region_brightness.append((label, percentiles))
+
+        brightness_values.append((i * step_size, region_brightness))
+        start = False
+
+    # Show the results
+    if vis:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+        axes[0].imshow(image_8bit, cmap='gray')
+        axes[0].set_title("Original Image (8-bit Scaled)")
+        axes[0].axis("off")
+
+        axes[1].imshow(result)
+        axes[1].set_title("Detected Boundary")
+        axes[1].axis("off")
+
+        plt.show()
+
+    # Print brightness percentiles for each expansion step
+    print("Expansion Step (pixels) - Brightness in Regions:")
+    for step, regions in brightness_values:
+        print(f"Step {step} pixels:")
+        for region_id, percentiles in regions:
+            print(f"  Region {region_id}: 25th={percentiles[0]:.2f}, 50th={percentiles[1]:.2f}, 75th={percentiles[2]:.2f}, 95th={percentiles[3]:.2f}")
+
+    return brightness_values
+
+def remove_large_objects(binary_image, max_size):
+    labeled_image = label(binary_image)
+    sizes = np.bincount(labeled_image.ravel())  # Count sizes of objects
+    mask = sizes <= max_size  # Keep only objects smaller than max_size
+    mask[0] = 0  # Ensure background remains
+    return mask[labeled_image]
+
+def analyze_bright_spots(image_path, vis=False):
     """
     Analyzes bright spots in the membrane channel of the image.
 
@@ -340,23 +602,82 @@ def analyze_bright_spots(image_path):
         image_path: Path to the image file.
     """
     img = imread(image_path)
+
+    #####################################################
+    ## membrane
     channel_2 = img[1, :, :]
-    binary_membrane = channel_2 > threshold_otsu(channel_2)
+
+    #####################################################
+    ## nuclei
+    channel_1 = img[0, :, :]
+
+    # removes small spots, dont use
+    # channel_2_blurred = cv2.GaussianBlur(channel_2, (13, 13), 0)
+
+    # Threshold the membrane channel using Otsu's method
+    thresh = threshold_otsu(channel_2)
+    binary_membrane = channel_2 > thresh
+
+    # #dilate and erode to connect parts that are too close to membrane
+    # # Expand outward by dilation
+    # kernel = np.ones((3, 3), np.uint8)
+    # expanded_mask = cv2.dilate(binary_membrane, kernel)
+
+    # # Erode mask back
+    # erode_mask = cv2.erode(expanded_mask, kernel)
+
+    # Convert binary mask to uint8 for OpenCV
     binary_membrane_uint8 = (binary_membrane * 255).astype(np.uint8)
+
+    # Define kernel
     kernel = np.ones((5, 5), np.uint8)
-    final_mask = cv2.erode(cv2.dilate(binary_membrane_uint8, kernel, iterations=3), kernel, iterations=3) > 0
-    cleaned_membrane = remove_small_objects(final_mask, min_size=3)
-    plt.figure(figsize=(15, 5))
-    plt.subplot(1, 3, 1)
-    plt.imshow(channel_2, cmap="gray")
-    plt.title("Original Membrane Channel")
-    plt.subplot(1, 3, 2)
-    plt.imshow(binary_membrane, cmap="gray")
-    plt.title("Binary Membrane (Otsu Threshold)")
-    plt.subplot(1, 3, 3)
-    plt.imshow(cleaned_membrane, cmap="gray")
-    plt.title("Cleaned Membrane (Objects smaller than 3 pixels)")
-    plt.show()
+
+    # Expand outward by dilation
+    expanded_mask = cv2.dilate(binary_membrane_uint8, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+
+    # Erode mask back
+    eroded_mask = cv2.erode(expanded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+
+    # Convert back to boolean if needed
+    final_mask = eroded_mask > 0
+
+    # Remove large objects (connected components) larger than 81 pixels
+    cleaned_membrane = remove_large_objects(
+        final_mask, max_size=81
+    )  # min_size is exclusive, so use 51 to remove objects > 50
+
+    # Remove too small objects
+    cleaned_membrane = remove_small_objects(cleaned_membrane, min_size=3)
+
+    # Optional: Label the remaining objects (if you need to analyze them individually)
+    labeled_membrane = label(cleaned_membrane)
+
+    # Example: Count the remaining objects
+    num_objects = np.max(labeled_membrane)
+    print(f"Number of remaining objects: {num_objects}")
+
+    if vis:
+        plt.figure(figsize=(15, 5))
+
+        plt.subplot(1, 3, 1)
+        plt.imshow(channel_2, cmap="gray")
+        plt.title("Original Membrane Channel")
+
+        plt.subplot(1, 3, 2)
+        plt.imshow(binary_membrane, cmap="gray")
+        plt.title("Binary Membrane (Otsu Threshold)")
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(cleaned_membrane, cmap="gray")
+        plt.title("Cleaned Membrane (Objects smaller than 3 pixels)")
+
+        plt.show()
+
+    return cleaned_membrane
 
 def prep_for_membrane_analysis(image_path, vis=False):
     """
