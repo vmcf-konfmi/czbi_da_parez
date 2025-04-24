@@ -339,27 +339,41 @@ def process_image(image_path):
         label_image_ch2, _, _ = image_th_ch2(channel_2)
         save_label_mask(image_path, label_image_ch2, output_folder)
         df_features_ch2 = measure_image(label_image_ch2, channel_2, properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity', 'mean_intensity', 'major_axis_length', 'minor_axis_length'])
-        ## save full features csv
+        ## save full image features csv before squashing in one row
         df_features_ch2.to_csv(os.path.join(output_folder, f"{image_name}_features_ch2.csv"), index=False)
         summary_df_ch2 = summarize_features(df_features_ch2)
 
         #####################################################
         ## membrane gradient
-        #TODO: gradient_analysis(image_path,vis=False)
+        # TODO: gradient_analysis(image_path,vis=False) make proper moprhometrics
+        gradient_mask = gradient_analysis(image_path, verbose=False, vis=False)
+        df_gradient_features_ch2 = measure_image(label(gradient_mask), channel_2,
+                                        properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                    'mean_intensity', 'major_axis_length', 'minor_axis_length'])
 
         #####################################################
-        ## bright spots
-        #TODO: analyze_bright_spots(image_path,vis=False)
+        ## membrane bright spots
+        # TODO: analyze_bright_spots(image_path,vis=False) make proper moprhometrics
+        bright_spots_mask = analyze_bright_spots(image_path, vis=False)
+        df_bright_spots_features_ch2 = measure_image(label(bright_spots_mask), channel_2,
+                                                 properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                             'mean_intensity', 'major_axis_length',
+                                                             'minor_axis_length'])
 
         #####################################################
-        ## detect boundary
-        #TODO: detect_boundary(image_path)
+        ## membrane detect boundary
+        # TODO: detect_boundary(image_path,vis=False) make proper moprhometrics
+        boundary_mask = detect_boundary(image_path, vis=False)
+        df_boundary_features_ch2 = measure_image(label(boundary_mask), channel_2,
+                                                     properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                                 'mean_intensity', 'major_axis_length',
+                                                                 'minor_axis_length'])
 
         #####################################################
         ## membrane continuity
         cleaned_channel_2, cleaned_membrane = prep_for_membrane_analysis(image_path,vis=False)
         membrane_continuity_metrics = analyze_membrane_continuity(cleaned_channel_2, cleaned_membrane)
-        summary_df_ch2 = pd.concat([summary_df_ch2, membrane_continuity_metrics], axis=1)
+        summary_df_ch2 = pd.concat([summary_df_ch2, membrane_continuity_metrics, df_gradient_features_ch2, df_bright_spots_features_ch2, df_boundary_features_ch2], axis=1)
 
         #####################################################
         ## nuclei
@@ -389,7 +403,7 @@ def process_image(image_path):
         print(f"Error processing {image_path}: {e}")
         return None
 
-def detect_boundary(image_path):
+def detect_boundary(image_path, vis=False):
     """
     Detects the boundary of the membrane in the image.
 
@@ -404,18 +418,25 @@ def detect_boundary(image_path):
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     result = cv2.cvtColor(image_8bit, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
-    fig, axes = plt.subplots(1, 3, figsize=(12, 6))
-    axes[0].imshow(image_8bit, cmap='gray')
-    axes[0].set_title("Original Image (8-bit Scaled)")
-    axes[1].imshow(result)
-    axes[1].set_title("Detected Boundary")
-    axes[2].imshow(blurred)
-    axes[2].set_title("Blurred")
-    for ax in axes:
-        ax.axis("off")
-    plt.show()
+    if vis:
+        fig, axes = plt.subplots(1, 3, figsize=(12, 6))
+        axes[0].imshow(image_8bit, cmap='gray')
+        axes[0].set_title("Original Image (8-bit Scaled)")
+        axes[1].imshow(result)
+        axes[1].set_title("Detected Boundary")
+        axes[2].imshow(blurred)
+        axes[2].set_title("Blurred")
+        for ax in axes:
+            ax.axis("off")
+        plt.show()
+    # Create a blank mask with the same dimensions as the thresholded image
+    mask = np.zeros_like(thresh, dtype=np.uint8)
 
-def detect_boundary_wider(image_path):
+    # Draw the contours onto the mask
+    cv2.drawContours(mask, contours, -1, color=255, thickness=cv2.FILLED)
+    return mask
+
+def detect_boundary_wider(image_path, vis=False):
     """
         Detects the boundary of the membrane in the image.
 
@@ -477,24 +498,30 @@ def detect_boundary_wider(image_path):
     image_rgb = cv2.cvtColor(image_8bit, cv2.COLOR_GRAY2RGB)
     result = image_rgb.copy()
     cv2.drawContours(result, contours, -1, (255, 0, 0), 2)
+    if vis:
+        # Show the results
+        fig, axes = plt.subplots(1, 3, figsize=(12, 6))
+        axes[0].imshow(image_8bit, cmap='gray')
+        axes[0].set_title("Original Image (8-bit Scaled)")
+        axes[0].axis("off")
 
-    # Show the results
-    fig, axes = plt.subplots(1, 3, figsize=(12, 6))
-    axes[0].imshow(image_8bit, cmap='gray')
-    axes[0].set_title("Original Image (8-bit Scaled)")
-    axes[0].axis("off")
+        axes[1].imshow(result)
+        axes[1].set_title("Detected Boundary")
+        axes[1].axis("off")
 
-    axes[1].imshow(result)
-    axes[1].set_title("Detected Boundary")
-    axes[1].axis("off")
+        axes[2].imshow(blurred)
+        axes[2].set_title("blurred")
+        axes[2].axis("off")
 
-    axes[2].imshow(blurred)
-    axes[2].set_title("blurred")
-    axes[2].axis("off")
+        plt.show()
+    # Create a blank mask with the same dimensions as the thresholded image
+    mask = np.zeros_like(thresh, dtype=np.uint8)
 
-    plt.show()
+    # Draw the contours onto the mask
+    cv2.drawContours(mask, contours, -1, color=255, thickness=cv2.FILLED)
+    return mask
 
-def gradient_analysis(image_path,vis=False):
+def gradient_analysis(image_path, verbose=False, vis=False):
     """
     Analyzes the gradient of the membrane channel and returns bright spots.
 
@@ -578,12 +605,13 @@ def gradient_analysis(image_path,vis=False):
 
         plt.show()
 
-    # Print brightness percentiles for each expansion step
-    print("Expansion Step (pixels) - Brightness in Regions:")
-    for step, regions in brightness_values:
-        print(f"Step {step} pixels:")
-        for region_id, percentiles in regions:
-            print(f"  Region {region_id}: 25th={percentiles[0]:.2f}, 50th={percentiles[1]:.2f}, 75th={percentiles[2]:.2f}, 95th={percentiles[3]:.2f}")
+    if verbose:
+        # Print brightness percentiles for each expansion step
+        print("Expansion Step (pixels) - Brightness in Regions:")
+        for step, regions in brightness_values:
+            print(f"Step {step} pixels:")
+            for region_id, percentiles in regions:
+                print(f"  Region {region_id}: 25th={percentiles[0]:.2f}, 50th={percentiles[1]:.2f}, 75th={percentiles[2]:.2f}, 95th={percentiles[3]:.2f}")
 
     return brightness_values
 
