@@ -345,11 +345,10 @@ def process_image(image_path):
 
         #####################################################
         ## membrane gradient
-        # TODO: gradient_analysis(image_path,vis=False) make proper moprhometrics
-        gradient_mask = gradient_analysis(image_path, verbose=False, vis=False)
-        df_gradient_features_ch2 = measure_image(label(gradient_mask), channel_2,
-                                        properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
-                                                    'mean_intensity', 'major_axis_length', 'minor_axis_length'])
+        # TODO: gradient_analysis(image_path,vis=False) returns numbers not mask
+        gradient_array = gradient_analysis(image_path, verbose=False, vis=False)
+        # TODO: make it pandas table
+        #df_gradient_features_ch2 =
 
         #####################################################
         ## membrane bright spots
@@ -622,7 +621,93 @@ def remove_large_objects(binary_image, max_size):
     mask[0] = 0  # Ensure background remains
     return mask[labeled_image]
 
-def analyze_bright_spots(image_path, vis=False):
+def analyze_bright_spots(image_path, verbose=False, vis=False):
+    """
+    Analyzes bright spots in the membrane channel of the image.
+
+    Args:
+        image_path: Path to the image file.
+    """
+    img = imread(image_path)
+
+    #####################################################
+    ## membrane
+    channel_2 = img[1, :, :]
+
+    #####################################################
+    ## nuclei
+    channel_1 = img[0, :, :]
+
+    # removes small spots, dont use
+    # channel_2_blurred = cv2.GaussianBlur(channel_2, (13, 13), 0)
+
+    # Threshold the membrane channel using Otsu's method
+    thresh = threshold_otsu(channel_2)
+    binary_membrane = channel_2 > thresh
+
+    # #dilate and erode to connect parts that are too close to membrane
+    # # Expand outward by dilation
+    # kernel = np.ones((3, 3), np.uint8)
+    # expanded_mask = cv2.dilate(binary_membrane, kernel)
+
+    # # Erode mask back
+    # erode_mask = cv2.erode(expanded_mask, kernel)
+
+    # Convert binary mask to uint8 for OpenCV
+    binary_membrane_uint8 = (binary_membrane * 255).astype(np.uint8)
+
+    # Define kernel
+    kernel = np.ones((5, 5), np.uint8)
+
+    # Expand outward by dilation
+    expanded_mask = cv2.dilate(binary_membrane_uint8, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+
+    # Erode mask back
+    eroded_mask = cv2.erode(expanded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+
+    # Convert back to boolean if needed
+    final_mask = eroded_mask > 0
+
+    # Remove large objects (connected components) larger than 81 pixels
+    cleaned_membrane = remove_large_objects(
+        final_mask, max_size=81
+    )  # min_size is exclusive, so use 51 to remove objects > 50
+
+    # Remove too small objects
+    cleaned_membrane = remove_small_objects(cleaned_membrane, min_size=3)
+
+    # Optional: Label the remaining objects (if you need to analyze them individually)
+    labeled_membrane = label(cleaned_membrane)
+
+    # Example: Count the remaining objects
+    num_objects = np.max(labeled_membrane)
+    if verbose:
+      print(f"Number of remaining objects: {num_objects}")
+
+    if vis:
+        plt.figure(figsize=(15, 5))
+
+        plt.subplot(1, 3, 1)
+        plt.imshow(channel_2, cmap="gray")
+        plt.title("Original Membrane Channel")
+
+        plt.subplot(1, 3, 2)
+        plt.imshow(binary_membrane, cmap="gray")
+        plt.title("Binary Membrane (Otsu Threshold)")
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(cleaned_membrane, cmap="gray")
+        plt.title("Cleaned Membrane (Objects smaller than 3 pixels)")
+
+        plt.show()
+
+    return cleaned_membrane
+
+def analyze_bright_spots_old(image_path, vis=False):
     """
     Analyzes bright spots in the membrane channel of the image.
 
