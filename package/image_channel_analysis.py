@@ -331,6 +331,25 @@ def process_image(image_path, verbose=False):
 
     Returns: summary_df_ch1, summary_df_ch2 as statistical summary
     """
+    morph_properties_to_measure = [
+        'area',
+        'perimeter',
+        'centroid',
+        'solidity',
+        'major_axis_length',
+        'minor_axis_length',
+        'eccentricity',
+        'solidity',
+        'extent',
+        'mean_intensity',
+        'perimeter',
+        'equivalent_diameter',
+        'max_intensity',  # The maximum intensity within the region.
+        'mean_intensity',  # The average intensity within the region.
+        'min_intensity',  # The minimum intensity within the region.
+        'weighted_moments',
+    ]
+
     try:
         image_size, num_channels = image_info(image_path)
         if image_size is None or num_channels != 2:
@@ -372,9 +391,10 @@ def process_image(image_path, verbose=False):
         # TODO: analyze_bright_spots(image_path,vis=False) make proper moprhometrics
         bright_spots_mask = analyze_bright_spots(image_path, vis=False)
         df_bright_spots_features_ch2 = measure_image(label(bright_spots_mask), channel_2,
-                                                  properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
-                                                              'mean_intensity', 'major_axis_length',
-                                                              'minor_axis_length'])
+                                                  # properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                  #             'mean_intensity', 'major_axis_length',
+                                                  #             'minor_axis_length'])
+                                                  properties=morph_properties_to_measure)
         ## have more rows, can be summarized
         df_bright_spots_features_ch2_sum = summarize_features(df_bright_spots_features_ch2)
         df_bright_spots_features_ch2_sum = df_bright_spots_features_ch2_sum.add_prefix("membrane_bright_spots_")
@@ -388,9 +408,10 @@ def process_image(image_path, verbose=False):
         # TODO: detect_boundary(image_path,vis=False) make proper moprhometrics
         boundary_mask = detect_boundary(image_path, vis=False)
         df_boundary_features_ch2 = measure_image(label(boundary_mask), channel_2,
-                                                      properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
-                                                                  'mean_intensity', 'major_axis_length',
-                                                                  'minor_axis_length'])
+                                                      # properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                      #             'mean_intensity', 'major_axis_length',
+                                                      #             'minor_axis_length'])
+                                                      properties=morph_properties_to_measure)
         ## TODO: have more rows, migth not be good idea to summarize
         df_boundary_features_ch2_sum = summarize_features(df_boundary_features_ch2)
         df_boundary_features_ch2_sum = df_boundary_features_ch2_sum.add_prefix("membrane_boundary_")
