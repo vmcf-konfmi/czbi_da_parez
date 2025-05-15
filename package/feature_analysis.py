@@ -127,8 +127,8 @@ def drop_columns(df, substrings):
     Returns:
         pd.DataFrame: DataFrame with specified columns dropped.
     """
-    columns_to_drop = [col for col in df.columns if any(sub in col for sub in substrings)]
-    return df.drop(columns=columns_to_drop)
+
+    return df.loc[:, ~df.columns.str.contains('nuclei')]
 
 # Correlation analysis
 def correlation_analysis(df):
