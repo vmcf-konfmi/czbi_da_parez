@@ -26,58 +26,86 @@ def load_data(file_path):
 # Assign type, image ID, and source based on image name
 def assign_columns(df):
     """
-    Assign type, image ID, and source based on image name.
+    Assign type, image ID, source, and person ID based on the 'image_name' column.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
 
     Returns:
-        pd.DataFrame: DataFrame with new columns.
+        pd.DataFrame: DataFrame with new columns added.
     """
-    def assign_type(image_name):
-        if "Filaggrin" in image_name:
-            return "Filaggrin"
-        elif "Loricrin" in image_name:
-            return "Loricrin"
-        elif "Involucrin" in image_name:
-            return "Involucrin"
-        else:
-            return "Other"
-
-    def assign_imageID(image_name):
-        if "1" in image_name:
-            return "1"
-        elif "2" in image_name:
-            return "2"
-        elif "3" in image_name:
-            return "3"
-        else:
-            return "Other"
-
-    def assign_source(image_name):
-        if "Healthy" in image_name:
-            return "Healthy"
-        elif "P" in image_name:
-            return "Patient"
-        else:
-            return "Other"
-
     df["type"] = df["image_name"].apply(assign_type)
     df["image-ID"] = df["image_name"].apply(assign_imageID)
     df["source"] = df["image_name"].apply(assign_source)
     df['person-ID'] = df['image_name'].str.split('_').str[0]
     return df
 
+def assign_type(image_name):
+    """
+    Determine the type of the image based on its name.
+
+    Args:
+        image_name (str): Name of the image.
+
+    Returns:
+        str: Type of the image (e.g., 'Filaggrin', 'Loricrin', 'Involucrin', or 'Other').
+    """
+    if "Filaggrin" in image_name:
+        return "Filaggrin"
+    elif "Loricrin" in image_name:
+        return "Loricrin"
+    elif "Involucrin" in image_name:
+        return "Involucrin"
+    else:
+        return "Other"
+
+def assign_imageID(image_name):
+    """
+    Extract the image ID from the image name.
+
+    Args:
+        image_name (str): Name of the image.
+
+    Returns:
+        str: Image ID (e.g., '1', '2', '3', or 'Other').
+    """
+    if "1" in image_name:
+        return "1"
+    elif "2" in image_name:
+        return "2"
+    elif "3" in image_name:
+        return "3"
+    else:
+        return "Other"
+
+def assign_source(image_name):
+    """
+    Determine the source of the image based on its name.
+
+    Args:
+        image_name (str): Name of the image.
+
+    Returns:
+        str: Source of the image (e.g., 'Healthy', 'Patient', or 'Other').
+    """
+    if "Healthy" in image_name:
+        return "Healthy"
+    elif "P" in image_name:
+        return "Patient"
+    else:
+        return "Other"
+
 # Group and pivot data
 def group_and_pivot(df):
     """
-    Group data by 'person-ID' and 'type', then pivot the table.
+    Group data by 'person-ID' and 'type', calculate the mean of numerical columns,
+    and pivot the table to create a wide-format DataFrame.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
 
     Returns:
-        pd.DataFrame: Pivoted DataFrame.
+        pd.DataFrame: Pivoted DataFrame with aggregated values.
     """
     numerical_cols = df.select_dtypes(include=np.number).columns
     mean_df = df.groupby(['person-ID', 'type'])[numerical_cols].mean().reset_index()
@@ -90,14 +118,14 @@ def group_and_pivot(df):
 # Drop specific columns
 def drop_columns(df, substrings):
     """
-    Drop columns containing specific substrings.
+    Drop columns from the DataFrame that contain specific substrings.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        substrings (list): List of substrings to check.
+        substrings (list): List of substrings to check for in column names.
 
     Returns:
-        pd.DataFrame: DataFrame with columns dropped.
+        pd.DataFrame: DataFrame with specified columns dropped.
     """
     columns_to_drop = [col for col in df.columns if any(sub in col for sub in substrings)]
     return df.drop(columns=columns_to_drop)
@@ -105,32 +133,40 @@ def drop_columns(df, substrings):
 # Correlation analysis
 def correlation_analysis(df):
     """
-    Perform correlation analysis and select the most unique features.
+    Perform correlation analysis on the DataFrame and select the most unique features
+    based on the variance of the correlation matrix.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
 
     Returns:
-        list: List of most unique features.
+        list: List of the most unique features (column names).
     """
     correlation_matrix = df.iloc[:, 2:].corr()
     variances = correlation_matrix.var()
     return variances.nlargest(505).index
 
 # t-SNE clustering
-def tsne_clustering(df, features, path_4_png, input_type):
+def tsne_clustering(df, features, path_4_png, input_type, n_components=2, random_state=42, perplexity=30, n_iter=1000):
     """
-    Perform t-SNE clustering and plot the results.
+    Perform t-SNE clustering on the selected features and plot the results.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        features (list): List of features to use.
+        features (list): List of features to use for clustering.
         path_4_png (str): Path to save the plot.
         input_type (str): Input type for the plot title.
+        n_components (int): Number of dimensions for t-SNE (default: 2).
+        random_state (int): Random seed for reproducibility (default: 42).
+        perplexity (int): Perplexity parameter for t-SNE (default: 30).
+        n_iter (int): Number of iterations for optimization (default: 1000).
+
+    Returns:
+        np.ndarray: t-SNE embedding of the data.
     """
     X = df[features]
     source = df['source']
-    tsne = TSNE(n_components=2, random_state=42)
+    tsne = TSNE(n_components, random_state, perplexity, n_iter)
     X_embedded = tsne.fit_transform(X)
     plt.figure(figsize=(10, 8))
     for s in source.unique():
@@ -141,19 +177,26 @@ def tsne_clustering(df, features, path_4_png, input_type):
     plt.legend()
     plt.savefig(f'{path_4_png}/Tsne_projection_{input_type}_source.png' if path_4_png else f'Tsne_projection_{input_type}_source.png')
     plt.show()
+    return X_embedded
 
 # UMAP clustering
-def umap_clustering(df, features, path_4_png, input_type):
+def umap_clustering(df, features, path_4_png, input_type, n_neighbors=35, min_dist=0.15, random_state=42):
     """
-    Perform UMAP clustering and plot the results.
+    Perform UMAP clustering on the selected features and plot the results.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        features (list): List of features to use.
+        features (list): List of features to use for clustering.
         path_4_png (str): Path to save the plot.
         input_type (str): Input type for the plot title.
+        n_neighbors (int): Number of neighbors for UMAP (default: 35).
+        min_dist (float): Minimum distance parameter for UMAP (default: 0.15).
+        random_state (int): Random seed for reproducibility (default: 42).
+
+    Returns:
+        np.ndarray: UMAP embedding of the data.
     """
-    reducer = umap.UMAP(n_neighbors=35, min_dist=0.15, random_state=42)
+    reducer = umap.UMAP(n_neighbors, min_dist, random_state)
     embedding = reducer.fit_transform(df[features].values)
     df['umap_x'] = embedding[:, 0]
     df['umap_y'] = embedding[:, 1]
@@ -168,22 +211,25 @@ def umap_clustering(df, features, path_4_png, input_type):
     plt.grid(True)
     plt.savefig(f'{path_4_png}/umap_projection_{input_type}_source.png' if path_4_png else f'umap_projection_{input_type}_source.png')
     plt.show()
+    return embedding
 
 # PCA analysis
-def pca_analysis(df, features):
+def pca_analysis(df, features, n_components=5):
     """
-    Perform PCA analysis and print the explained variance ratio and top features.
+    Perform PCA analysis on the selected features and print the explained variance ratio
+    and top contributing features for each principal component.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        features (list): List of features to use.
+        features (list): List of features to use for PCA.
+        n_components (int): Number of principal components to compute (default: 5).
 
     Returns:
         pd.DataFrame: DataFrame with PCA results.
     """
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(df[features])
-    pca = PCA(n_components=5)
+    pca = PCA(n_components)
     pca_result = pca.fit_transform(scaled_features)
     pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
     explained_variance_ratio = pca.explained_variance_ratio_
@@ -196,12 +242,12 @@ def pca_analysis(df, features):
         top_features = loadings.iloc[:, i].abs().nlargest(5).index
         for feature in top_features:
             print(f"{feature}: {loadings.loc[feature, f'PC{i+1}']:.4f}")
-    return pca_df
+    return pca_result
 
 # PCA visualization
 def pca_visualization(df, pca_df, path_4_png, input_type):
     """
-    Visualize PCA results and save the plot.
+    Visualize the PCA results by plotting the first two principal components.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
@@ -223,7 +269,18 @@ def pca_visualization(df, pca_df, path_4_png, input_type):
     plt.show()
 
 # Main function to run the analysis
-def main():
+def run_feature_analysis():
+    """
+    Main function to execute the feature analysis pipeline. It performs the following steps:
+    1. Load the dataset.
+    2. Assign new columns based on the 'image_name' column.
+    3. Group and pivot the data.
+    4. Drop specific columns based on substrings.
+    5. Perform correlation analysis to select unique features.
+    6. Apply t-SNE, UMAP, and PCA for dimensionality reduction and visualization.
+
+    Note: File paths and input types are hardcoded for this example.
+    """
     file_path = "/content/gdrive/Shareddrives/CzechBioImaging-DA-Parez/2024-11-28-16-10_image_analysis_results_new-features.csv"
     path_4_png = '/content/gdrive/Shareddrives/CzechBioImaging-DA-Parez'
     input_type = 'All-Combined'
@@ -235,10 +292,10 @@ def main():
     most_unique_features = correlation_analysis(pivot_df)
     new_df = pivot_df[['person-ID', 'source'] + list(most_unique_features)].dropna(subset=list(most_unique_features))
 
-    tsne_clustering(new_df, most_unique_features, path_4_png, input_type)
-    umap_clustering(new_df, most_unique_features, path_4_png, input_type)
+    tsne_df = tsne_clustering(new_df, most_unique_features, path_4_png, input_type)
+    umap_df = umap_clustering(new_df, most_unique_features, path_4_png, input_type)
     pca_df = pca_analysis(new_df, most_unique_features)
     pca_visualization(new_df, pca_df, path_4_png, input_type)
 
 if __name__ == "__main__":
-    main()
+    run_feature_analysis()
