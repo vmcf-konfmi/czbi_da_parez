@@ -131,7 +131,7 @@ def drop_columns(df, substrings):
     return df.loc[:, ~df.columns.str.contains('nuclei')]
 
 # Correlation analysis
-def correlation_analysis(df):
+def correlation_analysis(df, n_largest=505):
     """
     Perform correlation analysis on the DataFrame and select the most unique features
     based on the variance of the correlation matrix.
@@ -144,7 +144,7 @@ def correlation_analysis(df):
     """
     correlation_matrix = df.iloc[:, 2:].corr()
     variances = correlation_matrix.var()
-    return variances.nlargest(505).index
+    return variances.nlargest(n_largest).index
 
 # t-SNE clustering
 def tsne_clustering(df, features, path_4_png, input_type, n_components=2, random_state=42, perplexity=30, n_iter=1000):
