@@ -5,6 +5,12 @@ import os
 def find_todos_in_notebook(notebook_content):
     """
     Finds and summarizes TODOs in a Jupyter Notebook's text and code cells.
+
+    Use in Google Colab:
+        from utilities.ipynb_todo_check import *
+        path = "/path/to/folder/with/notebook"
+        notebook_name = "01_notebook.ipynb"
+        ipynb_todo_check(path, notebook_name)
     """
     todos = []
     for cell in notebook_content['cells']:
