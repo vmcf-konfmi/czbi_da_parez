@@ -37,6 +37,12 @@ from skimage.exposure import rescale_intensity
 from stardist.models import StarDist2D
 from scipy.ndimage import distance_transform_edt
 
+def version():
+    """
+    Returns the version of the package.
+    """
+    return "2025-04-25"
+
 def image_info(image_path):
     """
     Get image size and number of channels.
@@ -316,7 +322,7 @@ def process_imag_old(image_path):
         print(f"Error processing {image_path}: {e}")
         return None
 
-def process_image(image_path):
+def process_image(image_path, verbose=False):
     """
     Processes an image and returns information about it.
 
@@ -325,9 +331,29 @@ def process_image(image_path):
 
     Returns: summary_df_ch1, summary_df_ch2 as statistical summary
     """
+    morph_properties_to_measure = [
+        'area',
+        'perimeter',
+        'centroid',
+        'solidity',
+        'major_axis_length',
+        'minor_axis_length',
+        'eccentricity',
+        'solidity',
+        'extent',
+        'mean_intensity',
+        'perimeter',
+        'equivalent_diameter',
+        'max_intensity',  # The maximum intensity within the region.
+        'mean_intensity',  # The average intensity within the region.
+        'min_intensity',  # The minimum intensity within the region.
+        'weighted_moments',
+    ]
+
     try:
         image_size, num_channels = image_info(image_path)
         if image_size is None or num_channels != 2:
+            print(f"Invalid image: {image_path}")
             return None
 
         img = imread(image_path)
@@ -342,37 +368,68 @@ def process_image(image_path):
         ## save full image features csv before squashing in one row
         df_features_ch2.to_csv(os.path.join(output_folder, f"{image_name}_features_ch2.csv"), index=False)
         summary_df_ch2 = summarize_features(df_features_ch2)
+        summary_df_ch2 = summary_df_ch2.add_prefix("membrane_")
+
+        if verbose:
+          print("summary_df_ch2")
+          print(summary_df_ch2.columns)
 
         #####################################################
         ## membrane gradient
-        # TODO: gradient_analysis(image_path,vis=False) returns numbers not mask
-        gradient_array = gradient_analysis(image_path, verbose=False, vis=False)
-        # TODO: make it pandas table
-        #df_gradient_features_ch2 =
+        # DONE: gradient_analysis(image_path,vis=False) returns numbers not mask
+        gradient_arr = gradient_analysis(image_path, verbose=False, vis=False)
+        # DONE: make it pandas table
+        df_gradient_features_ch2 = format_data_to_dataframe(gradient_arr)
+        df_gradient_features_ch2 = df_gradient_features_ch2.add_prefix("membrane_gradient_")
+
+        if verbose:
+          print("df_gradient_features_ch2")
+          print(df_gradient_features_ch2.columns)
 
         #####################################################
         ## membrane bright spots
         # TODO: analyze_bright_spots(image_path,vis=False) make proper moprhometrics
         bright_spots_mask = analyze_bright_spots(image_path, vis=False)
         df_bright_spots_features_ch2 = measure_image(label(bright_spots_mask), channel_2,
-                                                 properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
-                                                             'mean_intensity', 'major_axis_length',
-                                                             'minor_axis_length'])
+                                                  # properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                  #             'mean_intensity', 'major_axis_length',
+                                                  #             'minor_axis_length'])
+                                                  properties=morph_properties_to_measure)
+        ## have more rows, can be summarized
+        df_bright_spots_features_ch2_sum = summarize_features(df_bright_spots_features_ch2)
+        df_bright_spots_features_ch2_sum = df_bright_spots_features_ch2_sum.add_prefix("membrane_bright_spots_")
+
+        if verbose:
+          print("df_bright_spots_features_ch2_sum")
+          print(df_bright_spots_features_ch2.columns)
 
         #####################################################
         ## membrane detect boundary
         # TODO: detect_boundary(image_path,vis=False) make proper moprhometrics
         boundary_mask = detect_boundary(image_path, vis=False)
         df_boundary_features_ch2 = measure_image(label(boundary_mask), channel_2,
-                                                     properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
-                                                                 'mean_intensity', 'major_axis_length',
-                                                                 'minor_axis_length'])
+                                                      # properties=['area', 'perimeter', 'centroid', 'bbox', 'solidity',
+                                                      #             'mean_intensity', 'major_axis_length',
+                                                      #             'minor_axis_length'])
+                                                      properties=morph_properties_to_measure)
+        ## TODO: have more rows, migth not be good idea to summarize
+        df_boundary_features_ch2_sum = summarize_features(df_boundary_features_ch2)
+        df_boundary_features_ch2_sum = df_boundary_features_ch2_sum.add_prefix("membrane_boundary_")
+
+        if verbose:
+          print("df_boundary_features_ch2_sum")
+          print(df_boundary_features_ch2_sum.columns)
 
         #####################################################
         ## membrane continuity
         cleaned_channel_2, cleaned_membrane = prep_for_membrane_analysis(image_path,vis=False)
         membrane_continuity_metrics = analyze_membrane_continuity(cleaned_channel_2, cleaned_membrane)
-        summary_df_ch2 = pd.concat([summary_df_ch2, membrane_continuity_metrics, df_gradient_features_ch2, df_bright_spots_features_ch2, df_boundary_features_ch2], axis=1)
+
+        membrane_continuity_metrics = membrane_continuity_metrics.add_prefix("membrane_continuity_")
+
+        if verbose:
+          print("membrane_continuity_metrics")
+          print(membrane_continuity_metrics.columns)
 
         #####################################################
         ## nuclei
@@ -382,20 +439,49 @@ def process_image(image_path):
         df_features_ch1 = measure_image(label_image_ch1, channel_1, properties=['area', 'perimeter', 'solidity', 'max_intensity', 'mean_intensity', 'min_intensity', 'major_axis_length', 'minor_axis_length'])
         df_features_ch1.to_csv(os.path.join(output_folder, f"{image_name}_features_ch1.csv"), index=False)
         summary_df_ch1 = summarize_features(df_features_ch1)
+        summary_df_ch1 = summary_df_ch1.add_prefix("nuclei_")
+
+        if verbose:
+          print("summary_df_ch1")
+          print(summary_df_ch1.columns)
+
+        ## finish and sum up membrane featrues
 
         specific_df = pd.DataFrame(index=[0])
         specific_df['nuclei_under_membrane'] = count_nuclei_under_membrane(label_image_ch1, create_mask_from_labels(label_image_ch2))
-        specific_df['percentage_nuclei_pixels'] = percentage_nuclei_pixels(label_image_ch1, create_mask_from_labels(label_image_ch2))
-        specific_df['membrane_pixel_count'] = measure_membrane_pixel_count(label_image_ch2)
+        specific_df['nuclei_percentage_pixels'] = percentage_nuclei_pixels(label_image_ch1, create_mask_from_labels(label_image_ch2))
+        specific_df['nuclei_membrane_pixel_count'] = measure_membrane_pixel_count(label_image_ch2)
         thickness_stats = measure_membrane_thickness(label_image_ch2, channel_2)
         if thickness_stats:
             # Convert thickness_stats to DataFrame with index
             thickness_df = pd.DataFrame(thickness_stats, index=[0])
             specific_df = pd.concat([specific_df, thickness_df], axis=1) # Concatenate with specific_df
             # specific_df.update(thickness_stats) # Remove this line
+
+        if verbose:
+          print("specific_df")
+          print(specific_df.columns)
+
+        thickness_df = thickness_df.add_prefix("membrane_thickness_")
+
+        if verbose:
+          print("thickness_df")
+          print(thickness_df.columns)
+
         brightness_variability = measure_brightness_variability(channel_2, create_mask_from_labels(label_image_ch2))
+
+        if verbose:
+          print("brightness_variability")
+          print(brightness_variability)
+
         if brightness_variability:
             specific_df['membrane_brightness_std_dev'] = brightness_variability['std_dev']
+
+        # for df in [summary_df_ch2, membrane_continuity_metrics, df_gradient_features_ch2, df_bright_spots_features_ch2_sum, df_boundary_features_ch2_sum, thickness_df]:
+        #   print(f"Number of rows in DataFrame: {len(df)}")
+
+        ## save all metrics in one data frame
+        summary_df_ch2 = pd.concat([summary_df_ch2, membrane_continuity_metrics, df_gradient_features_ch2, df_bright_spots_features_ch2_sum, df_boundary_features_ch2_sum, thickness_df], axis=1)
 
         return summary_df_ch1, summary_df_ch2, specific_df
     except Exception as e:
@@ -707,7 +793,7 @@ def analyze_bright_spots(image_path, verbose=False, vis=False):
 
     return cleaned_membrane
 
-def analyze_bright_spots_old(image_path, vis=False):
+def analyze_bright_spots(image_path, verbose=False, vis=False):
     """
     Analyzes bright spots in the membrane channel of the image.
 
@@ -771,7 +857,8 @@ def analyze_bright_spots_old(image_path, vis=False):
 
     # Example: Count the remaining objects
     num_objects = np.max(labeled_membrane)
-    print(f"Number of remaining objects: {num_objects}")
+    if verbose:
+      print(f"Number of remaining objects: {num_objects}")
 
     if vis:
         plt.figure(figsize=(15, 5))
@@ -868,6 +955,48 @@ def process_images_in_subfolders(root_folder):
     if all_results:
         return pd.concat(all_results, ignore_index=True)
     return None
+
+def format_data_to_dataframe(data):
+  """
+  Converts a specific data structure (list of tuples with nested region data
+  and numpy arrays) into a pandas DataFrame with column headers representing
+  the step, region, and percentile, and numerical values all in a single row.
+
+  Args:
+    data: A list of tuples. Each tuple contains:
+          - An integer representing the step (e.g., 60, 120).
+          - A list of tuples. Each inner tuple contains:
+            - An integer representing the region ID (e.g., 1, 2).
+            - A numpy array of four floats representing the 25th, 50th,
+              75th, and 95th percentiles.
+
+  Returns:
+    A pandas DataFrame with columns like 'Step_X_Region_Y_25th',
+    'Step_X_Region_Y_50th', etc., and numerical values in a single row.
+  """
+  # This dictionary will hold all the data for the single row.
+  # Keys will be the desired column names, and values will be the data points.
+  all_data = {}
+
+  # Define the percentile names
+  percentile_names = ["25th", "50th", "75th", "95th"]
+
+  # Iterate through each step and its associated region data
+  for step, regions_data in data:
+      # Iterate through each region within the step
+      for region, percentiles in regions_data:
+          # Iterate through the percentiles for the current region
+          for i, percentile_value in enumerate(percentiles):
+              # Create the column name in the desired format using underscores
+              column_name = f"Step_{step}_Region_{region}_{percentile_names[i]}"
+              # Add the numerical value to the single dictionary
+              all_data[column_name] = percentile_value
+
+  # Create the pandas DataFrame from a list containing only the single dictionary.
+  # This results in a DataFrame with one row.
+  df = pd.DataFrame([all_data])
+
+  return df
 
 # root_folder = "/content/gdrive/Shareddrives/CzechBioImaging-DA-Parez/Images/Skin samples"
 # results_df = process_images_in_subfolders(root_folder)
