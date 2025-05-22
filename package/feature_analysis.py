@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import umap
+import hdbscan
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
@@ -309,6 +310,62 @@ def umap_clustering(df, features, path_4_png, input_type, n_neighbors=35, min_di
     plt.show()
     return embedding
 
+def hdbscan_clustering(umap_embedding, min_cluster_size=5, min_samples=None):
+    """
+    Perform HDBSCAN clustering on UMAP embedding.
+
+    Args:
+        umap_embedding (np.ndarray): UMAP embedding of the data.
+        min_cluster_size (int): Minimum size of clusters (default: 5).
+        min_samples (int or None): Minimum samples in a cluster (default: None).
+
+    Returns:
+        np.ndarray: Cluster labels for each data point.
+    """
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
+    cluster_labels = clusterer.fit_predict(umap_embedding)
+    return cluster_labels
+
+def plot_umap_embedding(umap_embedding, clusters, source, path_4_png, input_type):
+    """
+    Plots the UMAP embedding colored by clusters and uses symbols for sources.
+
+    Args:
+        umap_embedding (np.ndarray): The 2D UMAP embedding coordinates.
+                                    Shape should be (n_samples, 2).
+        clusters (np.ndarray): 1D array of cluster labels for each data point.
+        source (pd.Series): Pandas Series containing source labels for each data point.
+        path_4_png (str): Path to save the plot.
+        input_type (str): Input type for the plot title.
+    """
+    if umap_embedding.shape[1] != 2:
+        raise ValueError("umap_embedding must be a 2D array for plotting.")
+
+    df_plot = pd.DataFrame({
+        'umap_x': umap_embedding[:, 0],
+        'umap_y': umap_embedding[:, 1],
+        'cluster': clusters,
+        'source': source
+    })
+
+    plt.figure(figsize=(10, 8))
+
+    # Use seaborn for scatter plot with hue (cluster) and style (source)
+    sns.scatterplot(data=df_plot, x='umap_x', y='umap_y', hue='cluster', style='source', palette='viridis', s=50)
+
+    plt.xlabel('UMAP X')
+    plt.ylabel('UMAP Y')
+    plt.title(f'UMAP Projection of {input_type} Data Colored by Cluster and Styled by Source')
+    plt.legend(title='Cluster', loc='upper right', bbox_to_anchor=(1.15, 1))
+    plt.grid(True)
+
+    if path_4_png:
+        plt.savefig(f'{path_4_png}/umap_projection_{input_type}_cluster_source.png')
+    else:
+        plt.savefig(f'umap_projection_{input_type}_cluster_source.png')
+
+    plt.show()
+
 # Feature importance analysis
 def get_umap_feature_importance(
   original_df: pd.DataFrame,
@@ -393,58 +450,121 @@ def get_umap_feature_importance(
   return importance_results
 
 # PCA analysis
-def pca_analysis(df, features, n_components=5):
+def pca_analysis(df, features, n_components=2):
     """
-    Perform PCA analysis on the selected features and print the explained variance ratio
-    and top contributing features for each principal component.
+    Perform PCA on the selected features.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
         features (list): List of features to use for PCA.
-        n_components (int): Number of principal components to compute (default: 5).
+        n_components (int): Number of principal components to keep (default: 2).
 
     Returns:
         pd.DataFrame: DataFrame with PCA results.
     """
+    X = df[features]
+    # Ensure only numerical features are selected
+    numerical_features = [col for col in features if pd.api.types.is_numeric_dtype(df[col])]
+
+    X_numerical = df[numerical_features]
+
+    # Scale the data
     scaler = StandardScaler()
-    scaled_features = scaler.fit_transform(df[features])
-    pca = PCA(n_components)
-    pca_result = pca.fit_transform(scaled_features)
-    pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
+    X_scaled = scaler.fit_transform(X_numerical)
+
+    # Apply PCA
+    pca = PCA(n_components=n_components)
+    principal_components = pca.fit_transform(X_scaled)
+
+    # Create a DataFrame for the principal components
+    pca_columns = [f'PC{i+1}' for i in range(n_components)]
+    pca_df = pd.DataFrame(data=principal_components, columns=pca_columns)
+
+    # You might want to add back identifying columns from the original df
+    # Assuming 'person-ID' and 'source' are important identifiers and are in the original df
+    if 'person-ID' in df.columns and 'source' in df.columns:
+        pca_df['person-ID'] = df['person-ID'].values
+        pca_df['source'] = df['source'].values
+    elif 'person-ID' in df.columns:
+         pca_df['person-ID'] = df['person-ID'].values
+    elif 'source' in df.columns:
+        pca_df['source'] = df['source'].values
+
+    explained_variance_ratio = pca.explained_variance_ratio_
+    print(f"Explained variance ratio by components: {explained_variance_ratio}")
+    print(f"Total explained variance: {explained_variance_ratio.sum()}")
+
     explained_variance_ratio = pca.explained_variance_ratio_
     print("Explained variance ratio for each principal component:")
     for i, ratio in enumerate(explained_variance_ratio):
         print(f"PC{i+1}: {ratio:.4f}")
-    loadings = pd.DataFrame(pca.components_.T, columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'], index=features)
-    for i in range(5):
+
+    # Dynamically create column names based on n_components for loadings DataFrame
+    loading_columns = [f'PC{i+1}' for i in range(n_components)]
+    # Ensure the index for loadings corresponds to the features used in PCA
+    loadings = pd.DataFrame(pca.components_.T, columns=loading_columns, index=numerical_features)
+
+    # Print top features based on the actual number of components
+    for i in range(n_components):
         print(f"\nTop 5 features for PC{i+1}:")
+        # Ensure we access columns based on the generated loading_columns
         top_features = loadings.iloc[:, i].abs().nlargest(5).index
         for feature in top_features:
             print(f"{feature}: {loadings.loc[feature, f'PC{i+1}']:.4f}")
-    return pca_result
+
+
+    return pca_df
 
 # PCA visualization
-def pca_visualization(df, pca_df, path_4_png, input_type):
+def pca_visualization(pca_df, path_4_png, input_type):
     """
     Visualize the PCA results by plotting the first two principal components.
 
     Args:
         df (pd.DataFrame): Input DataFrame.
-        pca_df (pd.DataFrame): DataFrame with PCA results.
+        pca_df (pd.DataFrame): DataFrame with PCA results (should contain 'source' column).
         path_4_png (str): Path to save the plot.
         input_type (str): Input type for the plot title.
     """
-    pca_df['source'] = df['source']
+    if 'source' not in pca_df.columns:
+        print("Error: 'source' column not found in the PCA DataFrame. Cannot visualize by source.")
+        return # Exit the function if 'source' is missing
+
     plt.figure(figsize=(8, 6))
     for source in pca_df['source'].unique():
         subset = pca_df[pca_df['source'] == source]
         plt.scatter(subset['PC1'], subset['PC2'], label=source, alpha=0.7)
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
-    plt.title('PCA Projection of Data Colored by Source')
+    plt.title(f'PCA Projection of Data ({input_type}) Colored by Source') # Added input_type to title
     plt.legend()
     plt.grid(True)
     plt.savefig(f'{path_4_png}/PCA_projection_{input_type}_source.png' if path_4_png else f'PCA_projection_{input_type}_source.png')
+    plt.show()
+
+def variance_analysis(df, most_unique_features, path_4_png, input_type):
+    """
+    Perform variance analysis and visualize the projection of data colored by source.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data to analyze.
+        most_unique_features (list): List of the most unique features for analysis.
+        path_4_png (str): Path to save the plot.
+        input_type (str): Input type for the plot title.
+    """
+    for source in df['source'].unique():
+        subset = df[df['source'] == source]
+        plt.scatter(subset[most_unique_features[0]], subset[most_unique_features[1]], label=source, alpha=0.7)
+
+    plt.xlabel(most_unique_features[0])
+    plt.ylabel(most_unique_features[1])
+    plt.title(f'Variance Projection of {input_type} Data Colored by Source')
+    plt.legend()
+    plt.grid(True)
+    if len(path_4_png) > 0:
+        plt.savefig(f'{path_4_png}/var_projection_{input_type}_source.png')
+    else:
+        plt.savefig(f'var_projection_{input_type}_source.png')
     plt.show()
 
 # Main function to run the analysis
