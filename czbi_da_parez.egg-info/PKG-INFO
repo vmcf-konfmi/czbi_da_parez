@@ -1,3 +1,27 @@
+Metadata-Version: 2.4
+Name: czbi_da_parez
+Version: 0.1.0
+Summary: A Python package for data processing and analysis in channel and feature analysis.
+Author: Martin Schätz
+Author-email: Martin Schätz <schatzm@natur.cuni.cz>
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: opencv-python==4.11.0
+Requires-Dist: scikit-image==0.25.2
+Requires-Dist: pandas==2.2.2
+Requires-Dist: numpy==2.0.2
+Requires-Dist: stardist
+Requires-Dist: tensorflow==2.18.0
+Requires-Dist: watermark
+Requires-Dist: umap-learn
+Requires-Dist: hdbscan
+Requires-Dist: seaborn
+Requires-Dist: scikit-learn
+Requires-Dist: nbformat
+Requires-Dist: nbconvert
+Dynamic: author
+Dynamic: requires-python
+
 # czbi-da-parez
 
 A Python package for data processing, image channel analysis, and feature analysis, designed for reproducible research and extensible workflows.

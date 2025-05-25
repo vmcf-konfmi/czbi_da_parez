@@ -1,0 +1,13 @@
+opencv-python==4.11.0
+scikit-image==0.25.2
+pandas==2.2.2
+numpy==2.0.2
+stardist
+tensorflow==2.18.0
+watermark
+umap-learn
+hdbscan
+seaborn
+scikit-learn
+nbformat
+nbconvert
