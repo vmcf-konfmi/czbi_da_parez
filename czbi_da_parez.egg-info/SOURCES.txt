@@ -1,6 +1,14 @@
 README.md
 pyproject.toml
 setup.py
+_old/__init__.py
+_old/package/__init__.py
+_old/package/feature_analysis.py
+_old/package/image_channel_analysis.py
+_old/package/quality.py
+_old/utilities/__init__.py
+_old/utilities/ipynb_helper.py
+_old/utilities/ipynb_todo_check.py
 czbi_da_parez/__init__.py
 czbi_da_parez.egg-info/PKG-INFO
 czbi_da_parez.egg-info/SOURCES.txt
@@ -15,10 +23,3 @@ czbi_da_parez/processing/quality.py
 czbi_da_parez/utilities/__init__.py
 czbi_da_parez/utilities/ipynb_helper.py
 czbi_da_parez/utilities/ipynb_todo_check.py
-package/__init__.py
-package/feature_analysis.py
-package/image_channel_analysis.py
-package/quality.py
-utilities/__init__.py
-utilities/ipynb_helper.py
-utilities/ipynb_todo_check.py

@@ -1,7 +1,6 @@
-opencv-python==4.11.0
-scikit-image==0.25.2
+opencv-python
 pandas==2.2.2
-numpy==2.0.2
+numpy==1.26.4
 stardist
 tensorflow==2.18.0
 watermark
@@ -11,3 +10,4 @@ seaborn
 scikit-learn
 nbformat
 nbconvert
+sphinx

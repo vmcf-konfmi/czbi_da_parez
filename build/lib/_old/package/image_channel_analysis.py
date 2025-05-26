@@ -1,11 +1,28 @@
-"""
-image_channel_analysis.py
-=========================
-Image channel analysis and mask extraction utilities.
+#!/usr/bin/env python
+# coding: utf-8
+# # X-channel analysis, mask extraction, extended features
+# from colab/01_x-channel-analysis_mask-extraction_extended-features-v2_better-names-20250327.py
 
-Module-level functions for image channel analysis and mask extraction.
-All functions are at the module level for Sphinx compatibility and batch workflows.
-"""
+# Last updated: 2025-03-27T14:33:41.507795+00:00
+#
+#  * Python implementation: CPython
+#  * Python version       : 3.11.11
+#  * IPython version      : 7.34.0
+#
+#  * Compiler    : GCC 11.4.0
+#  * OS          : Linux
+#  * Release     : 6.1.85+
+#  * Machine     : x86_64
+#  * Processor   : x86_64
+#  * CPU cores   : 2
+#  * Architecture: 64bit
+#
+#  * cv2       : 4.11.0
+#  * skimage   : 0.25.2
+#  * pandas    : 2.2.2
+#  * numpy     : 1.26.4
+#  * stardist  : 0.9.1
+#  * tensorflow: 2.18.0
 
 import os
 import cv2
@@ -20,8 +37,11 @@ from skimage.exposure import rescale_intensity
 from stardist.models import StarDist2D
 from scipy.ndimage import distance_transform_edt
 
-# Version info
-__version__ = "2025-04-25"
+def version():
+    """
+    Returns the version of the package.
+    """
+    return "2025-04-25"
 
 def image_info(image_path):
     """
@@ -713,8 +733,106 @@ def analyze_bright_spots(image_path, verbose=False, vis=False):
 
     # #dilate and erode to connect parts that are too close to membrane
     # # Expand outward by dilation
-    kernel = np.ones((3, 3), np.uint8)
-    expanded_mask = cv2.dilate(binary_membrane, kernel)
+    # kernel = np.ones((3, 3), np.uint8)
+    # expanded_mask = cv2.dilate(binary_membrane, kernel)
+
+    # # Erode mask back
+    # erode_mask = cv2.erode(expanded_mask, kernel)
+
+    # Convert binary mask to uint8 for OpenCV
+    binary_membrane_uint8 = (binary_membrane * 255).astype(np.uint8)
+
+    # Define kernel
+    kernel = np.ones((5, 5), np.uint8)
+
+    # Expand outward by dilation
+    expanded_mask = cv2.dilate(binary_membrane_uint8, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+    expanded_mask = cv2.dilate(expanded_mask, kernel)
+
+    # Erode mask back
+    eroded_mask = cv2.erode(expanded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+    eroded_mask = cv2.erode(eroded_mask, kernel)
+
+    # Convert back to boolean if needed
+    final_mask = eroded_mask > 0
+
+    # Remove large objects (connected components) larger than 81 pixels
+    cleaned_membrane = remove_large_objects(
+        final_mask, max_size=81
+    )  # min_size is exclusive, so use 51 to remove objects > 50
+
+    # Remove too small objects
+    cleaned_membrane = remove_small_objects(cleaned_membrane, min_size=3)
+
+    # Optional: Label the remaining objects (if you need to analyze them individually)
+    labeled_membrane = label(cleaned_membrane)
+
+    # Example: Count the remaining objects
+    num_objects = np.max(labeled_membrane)
+    if verbose:
+      print(f"Number of remaining objects: {num_objects}")
+
+    if vis:
+        plt.figure(figsize=(15, 5))
+
+        plt.subplot(1, 3, 1)
+        plt.imshow(channel_2, cmap="gray")
+        plt.title("Original Membrane Channel")
+
+        plt.subplot(1, 3, 2)
+        plt.imshow(binary_membrane, cmap="gray")
+        plt.title("Binary Membrane (Otsu Threshold)")
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(cleaned_membrane, cmap="gray")
+        plt.title("Cleaned Membrane (Objects smaller than 3 pixels)")
+
+        plt.show()
+
+    return cleaned_membrane
+
+def analyze_bright_spots(image_path, verbose=False, vis=False):
+    """
+    Analyzes bright spots in the membrane channel of the image.
+
+    Args:
+        image_path: Path to the image file.
+    """
+    img = imread(image_path)
+
+    #####################################################
+    ## membrane
+    channel_2 = img[1, :, :]
+
+    #####################################################
+    ## nuclei
+    channel_1 = img[0, :, :]
+
+    # removes small spots, dont use
+    # channel_2_blurred = cv2.GaussianBlur(channel_2, (13, 13), 0)
+
+    # Threshold the membrane channel using Otsu's method
+    thresh = threshold_otsu(channel_2)
+    binary_membrane = channel_2 > thresh
+
+    # #dilate and erode to connect parts that are too close to membrane
+    # # Expand outward by dilation
+    # kernel = np.ones((3, 3), np.uint8)
+    # expanded_mask = cv2.dilate(binary_membrane, kernel)
+
+    # # Erode mask back
+    # erode_mask = cv2.erode(expanded_mask, kernel)
+
+    # Convert binary mask to uint8 for OpenCV
+    binary_membrane_uint8 = (binary_membrane * 255).astype(np.uint8)
+
+    # Define kernel
+    kernel = np.ones((5, 5), np.uint8)
+
+    # Expand outward by dilation
+    expanded_mask = cv2.dilate(binary_membrane_uint8, kernel)
     expanded_mask = cv2.dilate(expanded_mask, kernel)
     expanded_mask = cv2.dilate(expanded_mask, kernel)
 
@@ -839,43 +957,50 @@ def process_images_in_subfolders(root_folder):
     return None
 
 def format_data_to_dataframe(data):
-    """
-    Converts a specific data structure (list of tuples with nested region data
-    and numpy arrays) into a pandas DataFrame with column headers representing
-    the step, region, and percentile, and numerical values all in a single row.
+  """
+  Converts a specific data structure (list of tuples with nested region data
+  and numpy arrays) into a pandas DataFrame with column headers representing
+  the step, region, and percentile, and numerical values all in a single row.
 
-    Args:
-        data: A list of tuples. Each tuple contains:
-            - An integer representing the step (e.g., 60, 120).
-            - A list of tuples. Each inner tuple contains:
-                - An integer representing the region ID (e.g., 1, 2).
-                - A numpy array of four floats representing the 25th, 50th,
-                  75th, and 95th percentiles.
+  Args:
+    data: A list of tuples. Each tuple contains:
+          - An integer representing the step (e.g., 60, 120).
+          - A list of tuples. Each inner tuple contains:
+            - An integer representing the region ID (e.g., 1, 2).
+            - A numpy array of four floats representing the 25th, 50th,
+              75th, and 95th percentiles.
 
-    Returns:
-        pandas.DataFrame: A DataFrame with columns like 'Step_X_Region_Y_25th',
-        'Step_X_Region_Y_50th', etc., and numerical values in a single row.
-    """
-    # This dictionary will hold all the data for the single row.
-    # Keys will be the desired column names, and values will be the data points.
-    all_data = {}
+  Returns:
+    A pandas DataFrame with columns like 'Step_X_Region_Y_25th',
+    'Step_X_Region_Y_50th', etc., and numerical values in a single row.
+  """
+  # This dictionary will hold all the data for the single row.
+  # Keys will be the desired column names, and values will be the data points.
+  all_data = {}
 
-    # Define the percentile names
-    percentile_names = ["25th", "50th", "75th", "95th"]
+  # Define the percentile names
+  percentile_names = ["25th", "50th", "75th", "95th"]
 
-    # Iterate through each step and its associated region data
-    for step, regions_data in data:
-        # Iterate through each region within the step
-        for region, percentiles in regions_data:
-            # Iterate through the percentiles for the current region
-            for i, percentile_value in enumerate(percentiles):
-                # Create the column name in the desired format using underscores
-                column_name = f"Step_{step}_Region_{region}_{percentile_names[i]}"
-                # Add the numerical value to the single dictionary
-                all_data[column_name] = percentile_value
+  # Iterate through each step and its associated region data
+  for step, regions_data in data:
+      # Iterate through each region within the step
+      for region, percentiles in regions_data:
+          # Iterate through the percentiles for the current region
+          for i, percentile_value in enumerate(percentiles):
+              # Create the column name in the desired format using underscores
+              column_name = f"Step_{step}_Region_{region}_{percentile_names[i]}"
+              # Add the numerical value to the single dictionary
+              all_data[column_name] = percentile_value
 
-    # Create the pandas DataFrame from a list containing only the single dictionary.
-    # This results in a DataFrame with one row.
-    df = pd.DataFrame([all_data])
+  # Create the pandas DataFrame from a list containing only the single dictionary.
+  # This results in a DataFrame with one row.
+  df = pd.DataFrame([all_data])
 
-    return df
+  return df
+
+# root_folder = "/content/gdrive/Shareddrives/CzechBioImaging-DA-Parez/Images/Skin samples"
+# results_df = process_images_in_subfolders(root_folder)
+# if results_df is not None:
+#     results_df.to_csv(f"/content/gdrive/Shareddrives/CzechBioImaging-DA-Parez/{datetime.now().strftime('%Y-%m-%d-%H-%M')}_image_analysis_results.csv", index=False)
+# else:
+#     print("No images found or processed successfully.")
