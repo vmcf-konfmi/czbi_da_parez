@@ -1,0 +1,40 @@
+# Ignore Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+build/
+dist/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Sphinx build output
+docs/_build/
+
+# Ignore VS Code settings and devcontainer metadata
+.vscode/
+.devcontainer/
+
+# Ignore test and temp files
+*.log
+*.tmp
+*.swp
+
+# Ignore local data and secrets
+.env
+.env.*
+secrets.*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore the Dockerfile itself (optional, if you don't want it in the build context)
+# Dockerfile
+
+# Ignore the README and docs (optional, if not needed in the image)
+# README.md
+# docs/

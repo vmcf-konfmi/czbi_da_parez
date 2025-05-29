@@ -144,3 +144,19 @@ Example Jupyter notebooks are in the `colab/` folder. Use the utilities to conve
 ## License
 
 MIT License
+
+## Getting Started with Dev Container
+
+This project includes a pre-configured VS Code Dev Container for a reproducible development environment. To get started:
+
+1. **Open in VS Code**: Open the project folder in [Visual Studio Code](https://code.visualstudio.com/).
+2. **Reopen in Container**: Press <kbd>F1</kbd> (or <kbd>Ctrl+Shift+P</kbd>) and run the command:
+   
+   ```
+   Dev Containers: Open Folder in Container
+   ```
+   
+   VS Code will build and launch the development environment inside a container, installing all dependencies automatically.
+3. **Start Coding**: Once the container is ready, you can run, test, and develop the package as described below.
+
+This ensures a consistent environment across all contributors and avoids dependency issues on your local machine.
