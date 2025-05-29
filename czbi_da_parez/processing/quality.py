@@ -1,73 +1,54 @@
 """
 quality.py
 ==========
-Quality checking utilities for image datasets.
+Quality and region-based analysis utilities.
 
-Classes:
-    QualityChecker: Provides methods for checking image paths and directory structure.
+Functions for measuring brightness variability, nuclei under membrane, and related metrics.
 """
 
-import os
-from skimage.io import imread
-import pandas as pd
+import numpy as np
 
-class QualityChecker:
+def measure_brightness_variability(intensity_image, mask):
     """
-    Provides methods for checking image paths and directory structure.
+    Measures the variability of brightness values under a mask.
+
+    Args:
+        intensity_image: The image containing brightness values.
+        mask: A binary mask where 1 indicates the region of interest.
+
+    Returns:
+        dict: Brightness variability metrics (e.g., standard deviation).
     """
-    @staticmethod
-    def check_image_paths(df: pd.DataFrame, image_path_column: str) -> None:
-        """
-        Checks if image paths in a DataFrame column exist.
+    masked_intensities = intensity_image[mask > 0]
+    if len(masked_intensities) == 0:
+        return None
+    return {'std_dev': np.std(masked_intensities)}
 
-        Args:
-            df (pd.DataFrame): DataFrame containing the image paths.
-            image_path_column (str): Name of the column containing image paths.
-        """
-        missing_images = []
-        for index, row in df.iterrows():
-            image_path = row[image_path_column]
-            if not os.path.exists(image_path):
-                missing_images.append(image_path)
-        if missing_images:
-            print("Missing images:")
-            for image_path in missing_images:
-                print(image_path)
-        else:
-            print("All images found.")
+def count_nuclei_under_membrane(nuclei_labels, membrane_mask):
+    """
+    Counts the number of nuclei under the membrane.
 
-    @staticmethod
-    def print_directory_tree(root_dir: str, indent: int = 0) -> None:
-        """
-        Prints a directory tree starting from the given root directory.
+    Args:
+        nuclei_labels: Labeled nuclei image.
+        membrane_mask: Binary mask of the membrane.
 
-        Args:
-            root_dir (str): Root directory to print.
-            indent (int): Indentation level (used internally).
-        """
-        for item in os.listdir(root_dir):
-            item_path = os.path.join(root_dir, item)
-            print("  " * indent + item)
-            if os.path.isdir(item_path):
-                QualityChecker.print_directory_tree(item_path, indent + 1)
+    Returns:
+        int: Number of nuclei under the membrane.
+    """
+    nuclei_under_membrane = np.unique(nuclei_labels[membrane_mask > 0])
+    return len(nuclei_under_membrane[nuclei_under_membrane != 0])
 
-    @staticmethod
-    def image_info(image_path: str):
-        """
-        Get image size, number of channels, and pixel size (if available).
+def percentage_nuclei_pixels(nuclei_labels, membrane_mask):
+    """
+    Calculates the percentage of nuclei pixels within the membrane.
 
-        Args:
-            image_path (str): Path to the image file.
+    Args:
+        nuclei_labels: Labeled nuclei image.
+        membrane_mask: Binary mask of the membrane.
 
-        Returns:
-            tuple: (image_size, num_channels, pixel_size_nm)
-        """
-        try:
-            img = imread(image_path)
-            image_size = img.shape[:2]  # height, width
-            num_channels = 1 if len(img.shape) == 2 else img.shape[0]
-            pixel_size_nm = "Unknown"  # Replace with actual pixel size if available
-            return image_size, num_channels, pixel_size_nm
-        except Exception as e:
-            print(f"Error processing {image_path}: {e}")
-            return None, None, None
+    Returns:
+        float: Percentage of nuclei pixels within the membrane.
+    """
+    total_nuclei_pixels_under_membrane = np.sum(membrane_mask[nuclei_labels > 0])
+    total_nuclei_pixels = np.sum(nuclei_labels > 0)
+    return (total_nuclei_pixels_under_membrane / total_nuclei_pixels) * 100 if total_nuclei_pixels else 0

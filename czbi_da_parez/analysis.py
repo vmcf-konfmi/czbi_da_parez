@@ -152,18 +152,31 @@ def drop_columns(df, substrings):
     return df.loc[:, ~df.columns.str.contains('nuclei')]
 
 
-def correlation_analysis(df, n_largest=505):
+def correlation_analysis(df, n_largest=None, n_smallest=None):
     """
     Perform correlation analysis on the DataFrame and select the most unique features
     based on the variance of the correlation matrix.
+
     Args:
         df (pd.DataFrame): Input DataFrame.
+        n_largest (int, optional): Number of features with the largest variance to select.
+        n_smallest (int, optional): Number of features with the smallest variance to select.
+
     Returns:
         list: List of the most unique features (column names).
+    Raises:
+        ValueError: If both n_largest and n_smallest are set.
     """
+    if n_largest is not None and n_smallest is not None:
+        raise ValueError("Only one of n_largest or n_smallest can be set.")
     correlation_matrix = df.iloc[:, 2:].corr()
     variances = correlation_matrix.var()
-    return variances.nlargest(n_largest).index
+    if n_largest is not None:
+        return variances.nlargest(n_largest).index
+    elif n_smallest is not None:
+        return variances.nsmallest(n_smallest).index
+    else:
+        return variances.index
 
 
 def tsne_clustering(df, features, path_4_png, input_type, n_components=2, random_state=42, perplexity=30, n_iter=1000):
@@ -269,18 +282,20 @@ def umap_clustering(df, features, path_4_png, input_type, n_neighbors=35, min_di
     return embedding
 
 
-def hdbscan_clustering(umap_embedding, min_cluster_size=5, min_samples=None):
+def hdbscan_clustering(embedding, min_cluster_size=5, min_samples=None):
     """
-    Perform HDBSCAN clustering on UMAP embedding.
+    Perform HDBSCAN clustering on a 2D embedding (UMAP or t-SNE).
     Args:
-        umap_embedding (np.ndarray): UMAP embedding of the data.
+        embedding (np.ndarray or pd.DataFrame): 2D embedding of the data (from UMAP or t-SNE).
         min_cluster_size (int): Minimum size of clusters (default: 5).
         min_samples (int or None): Minimum samples in a cluster (default: None).
     Returns:
         np.ndarray: Cluster labels for each data point.
     """
+    if isinstance(embedding, pd.DataFrame):
+        embedding = embedding.values
     clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=min_samples)
-    cluster_labels = clusterer.fit_predict(umap_embedding)
+    cluster_labels = clusterer.fit_predict(embedding)
     return cluster_labels
 
 
@@ -313,6 +328,42 @@ def plot_umap_embedding(umap_embedding, clusters, source, path_4_png, input_type
         plt.savefig(f'{path_4_png}/umap_projection_{input_type}_cluster_source.png')
     else:
         plt.savefig(f'umap_projection_{input_type}_cluster_source.png')
+    plt.show()
+
+
+def plot_tsne_embedding(tsne_embedding, clusters, source, path_4_png, input_type):
+    """
+    Plots the t-SNE embedding colored by clusters and uses symbols for sources.
+    Args:
+        tsne_embedding (np.ndarray or pd.DataFrame): The 2D t-SNE embedding coordinates.
+        clusters (np.ndarray): 1D array of cluster labels for each data point.
+        source (pd.Series): Pandas Series containing source labels for each data point.
+        path_4_png (str): Path to save the plot.
+        input_type (str): Input type for the plot title.
+    """
+    if isinstance(tsne_embedding, pd.DataFrame):
+        arr = tsne_embedding.values
+    else:
+        arr = tsne_embedding
+    if arr.shape[1] != 2:
+        raise ValueError("tsne_embedding must be a 2D array for plotting.")
+    df_plot = pd.DataFrame({
+        'tsne_x': arr[:, 0],
+        'tsne_y': arr[:, 1],
+        'cluster': clusters,
+        'source': source
+    })
+    plt.figure(figsize=(10, 8))
+    sns.scatterplot(data=df_plot, x='tsne_x', y='tsne_y', hue='cluster', style='source', palette='viridis', s=50)
+    plt.xlabel('t-SNE X')
+    plt.ylabel('t-SNE Y')
+    plt.title(f't-SNE Projection of {input_type} Data Colored by Cluster and Styled by Source')
+    plt.legend(title='Cluster', loc='upper right', bbox_to_anchor=(1.15, 1))
+    plt.grid(True)
+    if path_4_png:
+        plt.savefig(f'{path_4_png}/tsne_projection_{input_type}_cluster_source.png')
+    else:
+        plt.savefig(f'tsne_projection_{input_type}_cluster_source.png')
     plt.show()
 
 
@@ -481,7 +532,7 @@ def run_feature_analysis():
     pivot_df = group_and_pivot_median(df)
     pivot_df = drop_columns(pivot_df, ['_channel1_Involucrin', '_channel1_Loricrin', '_channel1_Filaggrin'])
     most_unique_features = correlation_analysis(pivot_df)
-    new_df = pivot_df[['person-ID', 'source'] + list(most_unique_features)].dropna(subset=list(most_unique_features))
+    new_df = pivot_df[['person-ID', 'source'] + list(most_unique_features]].dropna(subset=list(most_unique_features))
     tsne_df = tsne_clustering(new_df, most_unique_features, path_4_png, input_type)
     umap_df = umap_clustering(new_df, most_unique_features, path_4_png, input_type)
     pca_df = pca_analysis(new_df, most_unique_features)

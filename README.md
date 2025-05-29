@@ -2,6 +2,38 @@
 
 A Python package for data processing, image channel analysis, and feature analysis, designed for reproducible research and extensible workflows.
 
+## Importing Functions and Usage
+
+You can import functions and classes from `czbi_da_parez` in two main ways:
+
+### 1. Flat Import (Recommended)
+All public functions from the processing submodules are re-exported at the top level. This means you can import any function directly from the main package or the `processing` subpackage:
+
+```python
+# Import any function directly from the package (flat import)
+from czbi_da_parez import analyze_bright_spots, process_image, measure_image
+
+# Or from the processing subpackage
+from czbi_da_parez.processing import analyze_bright_spots, process_image, measure_image
+```
+
+### 2. Submodule Import
+You can also import functions or classes from their specific submodules if you prefer:
+
+```python
+from czbi_da_parez.processing.membrane_analysis import analyze_bright_spots
+from czbi_da_parez.processing.batch_processing import process_image
+from czbi_da_parez.processing.feature_summary import measure_image
+```
+
+### Example Usage
+```python
+from czbi_da_parez import process_image
+summary_df_ch1, summary_df_ch2, specific_df = process_image('path/to/image.tif')
+```
+
+Both import styles are supported. The flat import style is convenient for scripts and notebooks, while submodule imports are useful for clarity in larger projects.
+
 ## Features
 - **Processing**: Quality checks, image info extraction, and channel/mask processing.
 - **Analysis**: Feature extraction, clustering, dimensionality reduction, and statistical analysis.

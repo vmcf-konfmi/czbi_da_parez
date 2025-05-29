@@ -41,24 +41,556 @@
 </section>
 <section id="module-czbi_da_parez.processing">
 <span id="processing"></span><h1>processing<a class="headerlink" href="#module-czbi_da_parez.processing" title="Link to this heading">¶</a></h1>
-<section id="id2">
-<h2>processing<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
-<p>Data loading, cleaning, and transformation logic.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.analyze_bright_spots">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">analyze_bright_spots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.analyze_bright_spots" title="Link to this definition">¶</a></dt>
+<dd><p>Analyzes bright spots in the membrane channel of the image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> – Path to the image file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.analyze_membrane_continuity">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">analyze_membrane_continuity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.analyze_membrane_continuity" title="Link to this definition">¶</a></dt>
+<dd><p>Computes various metrics to assess membrane continuity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – The original membrane channel image.</p></li>
+<li><p><strong>mask</strong> – The binary mask of the cleaned membrane.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame containing the computed metrics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.count_nuclei_under_membrane">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">count_nuclei_under_membrane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nuclei_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">membrane_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.count_nuclei_under_membrane" title="Link to this definition">¶</a></dt>
+<dd><p>Counts the number of nuclei under the membrane.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nuclei_labels</strong> – Labeled nuclei image.</p></li>
+<li><p><strong>membrane_mask</strong> – Binary mask of the membrane.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of nuclei under the membrane.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.create_mask_from_labels">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">create_mask_from_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.create_mask_from_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a binary mask from a label image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>labels</strong> – A 2D numpy array representing the label image.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Binary mask.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.detect_boundary">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">detect_boundary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.detect_boundary" title="Link to this definition">¶</a></dt>
+<dd><p>Detects the boundary of the membrane in the image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> – Path to the image file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.detect_boundary_wider">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">detect_boundary_wider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.detect_boundary_wider" title="Link to this definition">¶</a></dt>
+<dd><p>Detects the boundary of the membrane in the image (wider version).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> – Path to the image file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.format_data_to_dataframe">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">format_data_to_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.format_data_to_dataframe" title="Link to this definition">¶</a></dt>
+<dd><p>Converts a specific data structure (list of tuples with nested region data and numpy arrays)
+into a pandas DataFrame with column headers representing the step, region, and percentile,
+and numerical values all in a single row.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – <p>A list of tuples. Each tuple contains:
+- An integer representing the step (e.g., 60, 120).
+- A list of tuples. Each inner tuple contains:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>An integer representing the region ID (e.g., 1, 2).</p></li>
+<li><p>A numpy array of four floats representing the 25th, 50th, 75th, and 95th percentiles.</p></li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A DataFrame with columns like ‘Step_X_Region_Y_25th’,
+‘Step_X_Region_Y_50th’, etc., and numerical values in a single row.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.gradient_analysis">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">gradient_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.gradient_analysis" title="Link to this definition">¶</a></dt>
+<dd><p>Analyzes the gradient of the membrane channel and returns bright spots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> (<em>str</em>) – Path to the image file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Brightness values for each expansion step.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.image_info">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">image_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.image_info" title="Link to this definition">¶</a></dt>
+<dd><p>Get image size and number of channels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> (<em>str</em>) – Path to the image file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Image size and number of channels.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.image_th_ch1">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">image_th_ch1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.image_th_ch1" title="Link to this definition">¶</a></dt>
+<dd><p>Processes channel 1 of the image using StarDist2D model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image</strong> – The input image.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Labeled image, None, and binary mask.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.image_th_ch2">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">image_th_ch2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.image_th_ch2" title="Link to this definition">¶</a></dt>
+<dd><p>Processes channel 2 of the image using Gaussian blur and Otsu thresholding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image</strong> – The input image.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Labeled image, blurred image, and thresholded image.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.measure_brightness_variability">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">measure_brightness_variability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intensity_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.measure_brightness_variability" title="Link to this definition">¶</a></dt>
+<dd><p>Measures the variability of brightness values under a mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>intensity_image</strong> – The image containing brightness values.</p></li>
+<li><p><strong>mask</strong> – A binary mask where 1 indicates the region of interest.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Brightness variability metrics (e.g., standard deviation).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.measure_image">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">measure_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intensity_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.measure_image" title="Link to this definition">¶</a></dt>
+<dd><p>Measures image properties using regionprops_table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_image</strong> – Labeled image.</p></li>
+<li><p><strong>intensity_image</strong> – Intensity image.</p></li>
+<li><p><strong>properties</strong> – List of properties to measure.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame of measured properties.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.measure_membrane_pixel_count">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">measure_membrane_pixel_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.measure_membrane_pixel_count" title="Link to this definition">¶</a></dt>
+<dd><p>Measures the total pixel count of the membrane regions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>label_image</strong> – Labeled image of membranes.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total pixel count of membrane regions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.measure_membrane_thickness">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">measure_membrane_thickness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intensity_image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.measure_membrane_thickness" title="Link to this definition">¶</a></dt>
+<dd><p>Measures membrane thickness statistics (median, min, max).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_image</strong> – Labeled image of membranes.</p></li>
+<li><p><strong>intensity_image</strong> – The original intensity image.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Median, minimum, and maximum thickness values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.normalize">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.normalize" title="Link to this definition">¶</a></dt>
+<dd><p>Normalizes the image intensity to the range [0, 1].</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.percentage_nuclei_pixels">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">percentage_nuclei_pixels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nuclei_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">membrane_mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.percentage_nuclei_pixels" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the percentage of nuclei pixels within the membrane.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nuclei_labels</strong> – Labeled nuclei image.</p></li>
+<li><p><strong>membrane_mask</strong> – Binary mask of the membrane.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Percentage of nuclei pixels within the membrane.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.plot_normalized_channels">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">plot_normalized_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.plot_normalized_channels" title="Link to this definition">¶</a></dt>
+<dd><p>Plots the normalized channels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel_1</strong> – The first image channel (e.g., nuclei).</p></li>
+<li><p><strong>channel_2</strong> – The second image channel (e.g., membrane).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.prep_for_membrane_analysis">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">prep_for_membrane_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.prep_for_membrane_analysis" title="Link to this definition">¶</a></dt>
+<dd><p>Prepares the membrane channel for analysis by thresholding and cleaning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> – Path to the image file.</p></li>
+<li><p><strong>vis</strong> (<em>bool</em>) – Whether to visualize the results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Membrane channel and cleaned membrane mask.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.process_imag_old">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">process_imag_old</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.process_imag_old" title="Link to this definition">¶</a></dt>
+<dd><p>Processes an image and returns information about it (legacy version).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> – The path to the image file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>summary_df_ch1, summary_df_ch2, specific_df as statistical summary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.process_image">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">process_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.process_image" title="Link to this definition">¶</a></dt>
+<dd><p>Processes an image and returns information about it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> – The path to the image file.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Whether to print debug information.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>summary_df_ch1, summary_df_ch2, specific_df as statistical summary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.process_images_in_subfolders">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">process_images_in_subfolders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.process_images_in_subfolders" title="Link to this definition">¶</a></dt>
+<dd><p>Processes all images in subfolders and returns a DataFrame with results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>root_folder</strong> – Path to the root folder containing images.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with results.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.save_label_mask">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">save_label_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.save_label_mask" title="Link to this definition">¶</a></dt>
+<dd><p>Saves the label image and mask as TIFF files in the specified folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_path</strong> (<em>str</em>) – Path to the input image.</p></li>
+<li><p><strong>labels</strong> (<em>numpy.ndarray</em>) – Label image data.</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em>) – Path to the output folder.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="czbi_da_parez.processing.summarize_features">
+<span class="sig-prename descclassname"><span class="pre">czbi_da_parez.processing.</span></span><span class="sig-name descname"><span class="pre">summarize_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.processing.summarize_features" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates summary statistics for a DataFrame and returns a new DataFrame with one row.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Input DataFrame.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with summary statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
-</section>
-<section id="module-czbi_da_parez.analysis">
-<span id="analysis"></span><h1>analysis<a class="headerlink" href="#module-czbi_da_parez.analysis" title="Link to this heading">¶</a></h1>
-<section id="id3">
-<h2>analysis<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
-<p>Feature extraction and statistical analysis.</p>
-</section>
+<section id="analysis">
+<h1>analysis<a class="headerlink" href="#analysis" title="Link to this heading">¶</a></h1>
 </section>
 <section id="module-czbi_da_parez.utilities">
 <span id="utilities"></span><h1>utilities<a class="headerlink" href="#module-czbi_da_parez.utilities" title="Link to this heading">¶</a></h1>
-<section id="id4">
-<h2>utilities<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<section id="id2">
+<h2>utilities<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <p>Helper functions and notebook utilities.</p>
 </section>
+<section id="quality-py">
+<span id="module-czbi_da_parez.utilities.quality"></span><h2>quality.py<a class="headerlink" href="#quality-py" title="Link to this heading">¶</a></h2>
+<p>Quality checking utilities for image datasets.</p>
+<dl class="simple">
+<dt>Classes:</dt><dd><p>QualityChecker: Provides methods for checking image paths and directory structure.</p>
+</dd>
+</dl>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.quality.QualityChecker">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">czbi_da_parez.utilities.quality.</span></span><span class="sig-name descname"><span class="pre">QualityChecker</span></span><a class="headerlink" href="#czbi_da_parez.utilities.quality.QualityChecker" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides methods for checking image paths and directory structure.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.quality.QualityChecker.check_image_paths">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">check_image_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_path_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#czbi_da_parez.utilities.quality.QualityChecker.check_image_paths" title="Link to this definition">¶</a></dt>
+<dd><p>Checks if image paths in a DataFrame column exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame containing the image paths.</p></li>
+<li><p><strong>image_path_column</strong> (<em>str</em>) – Name of the column containing image paths.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.quality.QualityChecker.image_info">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">image_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#czbi_da_parez.utilities.quality.QualityChecker.image_info" title="Link to this definition">¶</a></dt>
+<dd><p>Get image size, number of channels, and pixel size (if available).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_path</strong> (<em>str</em>) – Path to the image file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(image_size, num_channels, pixel_size_nm)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.quality.QualityChecker.print_directory_tree">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">print_directory_tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#czbi_da_parez.utilities.quality.QualityChecker.print_directory_tree" title="Link to this definition">¶</a></dt>
+<dd><p>Prints a directory tree starting from the given root directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_dir</strong> (<em>str</em>) – Root directory to print.</p></li>
+<li><p><strong>indent</strong> (<em>int</em>) – Indentation level (used internally).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-czbi_da_parez.utilities.ipynb_helper">
+<span id="ipynb-helper"></span><h1>ipynb_helper<a class="headerlink" href="#module-czbi_da_parez.utilities.ipynb_helper" title="Link to this heading">¶</a></h1>
+<section id="ipynb-helper-py">
+<h2>ipynb_helper.py<a class="headerlink" href="#ipynb-helper-py" title="Link to this heading">¶</a></h2>
+<p>Helper functions for working with Jupyter Notebooks.</p>
+<dl class="simple">
+<dt>Classes:</dt><dd><p>NotebookConverter: Provides methods for converting notebooks to Python scripts.</p>
+</dd>
+</dl>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.ipynb_helper.NotebookConverter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">czbi_da_parez.utilities.ipynb_helper.</span></span><span class="sig-name descname"><span class="pre">NotebookConverter</span></span><a class="headerlink" href="#czbi_da_parez.utilities.ipynb_helper.NotebookConverter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides methods for converting Jupyter Notebooks to Python scripts.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.ipynb_helper.NotebookConverter.convert_ipynb_to_py">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert_ipynb_to_py</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ipynb_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">py_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#czbi_da_parez.utilities.ipynb_helper.NotebookConverter.convert_ipynb_to_py" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a Jupyter Notebook (.ipynb) file to a Python (.py) script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ipynb_file</strong> (<em>str</em>) – The path to the input .ipynb file.</p></li>
+<li><p><strong>py_file</strong> (<em>str</em>) – The path to the output .py file.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-czbi_da_parez.utilities.ipynb_todo_check">
+<span id="ipynb-todo-check"></span><h1>ipynb_todo_check<a class="headerlink" href="#module-czbi_da_parez.utilities.ipynb_todo_check" title="Link to this heading">¶</a></h1>
+<section id="ipynb-todo-check-py">
+<h2>ipynb_todo_check.py<a class="headerlink" href="#ipynb-todo-check-py" title="Link to this heading">¶</a></h2>
+<p>Utilities for finding TODOs in Jupyter Notebooks.</p>
+<dl class="simple">
+<dt>Classes:</dt><dd><p>NotebookTodoChecker: Provides methods for finding and summarizing TODOs in notebooks.</p>
+</dd>
+</dl>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">czbi_da_parez.utilities.ipynb_todo_check.</span></span><span class="sig-name descname"><span class="pre">NotebookTodoChecker</span></span><a class="headerlink" href="#czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides methods for finding and summarizing TODOs in Jupyter Notebooks.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker.find_todos_in_notebook">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">find_todos_in_notebook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">notebook_content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker.find_todos_in_notebook" title="Link to this definition">¶</a></dt>
+<dd><p>Finds and summarizes TODOs in a Jupyter Notebook’s text and code cells.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>notebook_content</strong> (<em>dict</em>) – The notebook content as a dictionary.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker.ipynb_todo_check">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ipynb_todo_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notebook_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker.ipynb_todo_check" title="Link to this definition">¶</a></dt>
+<dd><p>Reads a Jupyter Notebook file and checks for TODOs in its cells.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – Path to the folder containing the notebook.</p></li>
+<li><p><strong>notebook_name</strong> (<em>str</em>) – Name of the notebook file.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 
@@ -94,15 +626,47 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#module-czbi_da_parez.processing">processing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id2">processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.analyze_bright_spots"><code class="docutils literal notranslate"><span class="pre">analyze_bright_spots()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.analyze_membrane_continuity"><code class="docutils literal notranslate"><span class="pre">analyze_membrane_continuity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.count_nuclei_under_membrane"><code class="docutils literal notranslate"><span class="pre">count_nuclei_under_membrane()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.create_mask_from_labels"><code class="docutils literal notranslate"><span class="pre">create_mask_from_labels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.detect_boundary"><code class="docutils literal notranslate"><span class="pre">detect_boundary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.detect_boundary_wider"><code class="docutils literal notranslate"><span class="pre">detect_boundary_wider()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.format_data_to_dataframe"><code class="docutils literal notranslate"><span class="pre">format_data_to_dataframe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.gradient_analysis"><code class="docutils literal notranslate"><span class="pre">gradient_analysis()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.image_info"><code class="docutils literal notranslate"><span class="pre">image_info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.image_th_ch1"><code class="docutils literal notranslate"><span class="pre">image_th_ch1()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.image_th_ch2"><code class="docutils literal notranslate"><span class="pre">image_th_ch2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.measure_brightness_variability"><code class="docutils literal notranslate"><span class="pre">measure_brightness_variability()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.measure_image"><code class="docutils literal notranslate"><span class="pre">measure_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.measure_membrane_pixel_count"><code class="docutils literal notranslate"><span class="pre">measure_membrane_pixel_count()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.measure_membrane_thickness"><code class="docutils literal notranslate"><span class="pre">measure_membrane_thickness()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.percentage_nuclei_pixels"><code class="docutils literal notranslate"><span class="pre">percentage_nuclei_pixels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.plot_normalized_channels"><code class="docutils literal notranslate"><span class="pre">plot_normalized_channels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.prep_for_membrane_analysis"><code class="docutils literal notranslate"><span class="pre">prep_for_membrane_analysis()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.process_imag_old"><code class="docutils literal notranslate"><span class="pre">process_imag_old()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.process_image"><code class="docutils literal notranslate"><span class="pre">process_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.process_images_in_subfolders"><code class="docutils literal notranslate"><span class="pre">process_images_in_subfolders()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.save_label_mask"><code class="docutils literal notranslate"><span class="pre">save_label_mask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.processing.summarize_features"><code class="docutils literal notranslate"><span class="pre">summarize_features()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#module-czbi_da_parez.analysis">analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id3">analysis</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="#analysis">analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-czbi_da_parez.utilities">utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id4">utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quality-py">quality.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.utilities.quality.QualityChecker"><code class="docutils literal notranslate"><span class="pre">QualityChecker</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#module-czbi_da_parez.utilities.ipynb_helper">ipynb_helper</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ipynb-helper-py">ipynb_helper.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.utilities.ipynb_helper.NotebookConverter"><code class="docutils literal notranslate"><span class="pre">NotebookConverter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#module-czbi_da_parez.utilities.ipynb_todo_check">ipynb_todo_check</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ipynb-todo-check-py">ipynb_todo_check.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#czbi_da_parez.utilities.ipynb_todo_check.NotebookTodoChecker"><code class="docutils literal notranslate"><span class="pre">NotebookTodoChecker</span></code></a></li>
 </ul>
 </li>
 </ul>

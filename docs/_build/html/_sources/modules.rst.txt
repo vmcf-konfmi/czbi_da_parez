@@ -29,3 +29,24 @@ utilities
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: czbi_da_parez.utilities.quality
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ipynb_helper
+============
+
+.. automodule:: czbi_da_parez.utilities.ipynb_helper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ipynb_todo_check
+================
+
+.. automodule:: czbi_da_parez.utilities.ipynb_todo_check
+    :members:
+    :undoc-members:
+    :show-inheritance:
