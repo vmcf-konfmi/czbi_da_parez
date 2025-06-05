@@ -8,8 +8,10 @@ Classes:
 """
 
 import os
+import logging
 from skimage.io import imread
 import pandas as pd
+from typing import Optional, Tuple
 
 class QualityChecker:
     """
@@ -24,17 +26,13 @@ class QualityChecker:
             df (pd.DataFrame): DataFrame containing the image paths.
             image_path_column (str): Name of the column containing image paths.
         """
-        missing_images = []
-        for index, row in df.iterrows():
-            image_path = row[image_path_column]
-            if not os.path.exists(image_path):
-                missing_images.append(image_path)
+        missing_images = df[~df[image_path_column].apply(os.path.exists)][image_path_column].tolist()
         if missing_images:
-            print("Missing images:")
+            logging.warning("Missing images:")
             for image_path in missing_images:
-                print(image_path)
+                logging.warning(image_path)
         else:
-            print("All images found.")
+            logging.info("All images found.")
 
     @staticmethod
     def print_directory_tree(root_dir: str, indent: int = 0) -> None:
@@ -52,7 +50,7 @@ class QualityChecker:
                 QualityChecker.print_directory_tree(item_path, indent + 1)
 
     @staticmethod
-    def image_info(image_path: str):
+    def image_info(image_path: str) -> Tuple[Optional[Tuple[int, int]], Optional[int], str]:
         """
         Get image size, number of channels, and pixel size (if available).
 
@@ -65,9 +63,36 @@ class QualityChecker:
         try:
             img = imread(image_path)
             image_size = img.shape[:2]  # height, width
-            num_channels = 1 if len(img.shape) == 2 else img.shape[0]
+            if len(img.shape) == 2:
+                num_channels = 1
+            elif len(img.shape) == 3:
+                num_channels = img.shape[2]
+            else:
+                num_channels = "Unknown"
             pixel_size_nm = "Unknown"  # Replace with actual pixel size if available
             return image_size, num_channels, pixel_size_nm
         except Exception as e:
-            print(f"Error processing {image_path}: {e}")
+            logging.error(f"Error processing {image_path}: {e}")
             return None, None, None
+
+    @staticmethod
+    def check_image_readability(df: pd.DataFrame, image_path_column: str) -> None:
+        """
+        Checks if images in a DataFrame column can be read (not just if the path exists).
+
+        Args:
+            df (pd.DataFrame): DataFrame containing the image paths.
+            image_path_column (str): Name of the column containing image paths.
+        """
+        unreadable_images = []
+        for image_path in df[image_path_column]:
+            try:
+                _ = imread(image_path)
+            except Exception as e:
+                unreadable_images.append((image_path, str(e)))
+        if unreadable_images:
+            logging.warning("Unreadable images:")
+            for image_path, err in unreadable_images:
+                logging.warning(f"{image_path}: {err}")
+        else:
+            logging.info("All images are readable.")
