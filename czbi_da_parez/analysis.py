@@ -532,7 +532,7 @@ def run_feature_analysis():
     pivot_df = group_and_pivot_median(df)
     pivot_df = drop_columns(pivot_df, ['_channel1_Involucrin', '_channel1_Loricrin', '_channel1_Filaggrin'])
     most_unique_features = correlation_analysis(pivot_df)
-    new_df = pivot_df[['person-ID', 'source'] + list(most_unique_features]].dropna(subset=list(most_unique_features))
+    new_df = pivot_df[['person-ID', 'source'] + list(most_unique_features)].dropna(subset=list(most_unique_features))
     tsne_df = tsne_clustering(new_df, most_unique_features, path_4_png, input_type)
     umap_df = umap_clustering(new_df, most_unique_features, path_4_png, input_type)
     pca_df = pca_analysis(new_df, most_unique_features)
