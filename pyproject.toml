@@ -12,12 +12,12 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "opencv-python-headless==4.11.0.86",
+    "opencv-python-headless",
+    "scikit-image",
+    #"scikit-image==0.25.2",
     "pandas==2.2.2",
     "numpy==1.26.4",
-    "scipy==1.10.1",
-    "scikit-image==0.25.2",
-    "stardist==0.9.1",
+    "stardist",
     "tensorflow==2.18.0",
     "watermark",
     "umap-learn",
